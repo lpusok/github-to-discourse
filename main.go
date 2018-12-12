@@ -59,11 +59,6 @@ func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
 
-var ctx context.Context
-var ts oauth2.TokenSource
-var tc *http.Client
-var client *github.Client
-
 func process(issues []*github.Issue, f *os.File) (c, staleCount, activeCount, cPR int) {
 	for k, i := range issues {
 		// avoid throttling
@@ -157,12 +152,12 @@ func main() {
 	mode := os.Args[1:][0]
 	var baseRepos []Repo
 
-	ctx = context.Background()
-	ts = oauth2.StaticTokenSource(
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN")},
 	)
-	tc = oauth2.NewClient(ctx, ts)
-	client = github.NewClient(tc)
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
 
 	switch mode {
 	case "test":
