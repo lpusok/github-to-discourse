@@ -244,9 +244,19 @@ func main() {
 	// c, staleCount, activeCount, cPR := 0, 0, 0, 0
 	var err error
 	f, err := os.OpenFile(stateFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-	ferr, err := os.OpenFile("err.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	defer f.Close()
+
+	ferr, err := os.OpenFile("err.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	defer ferr.Close()
+
 	if err != nil {
 		fmt.Printf("opening state file: %s", err)
 		os.Exit(1)
