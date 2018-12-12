@@ -32,7 +32,7 @@ func isStale(i *github.Issue) bool {
 	return i.GetUpdatedAt().Before(threeMonthsAgo)
 }
 
-func discourse(i *github.Issue) (string, error) {
+func discourse(i *github.Issue, mode string) (string, error) {
 	// save to discourse
 	discourseUrl := ""
 

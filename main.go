@@ -60,7 +60,7 @@ func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
 
-func process(issues []*github.Issue, f *os.File) (c, staleCount, activeCount, cPR int) {
+func process(issues []*github.Issue, f *os.File, mode string) (c, staleCount, activeCount, cPR int) {
 	for k, i := range issues {
 		// avoid throttling
 		time.Sleep(time.Millisecond + 1000)
@@ -91,7 +91,7 @@ func process(issues []*github.Issue, f *os.File) (c, staleCount, activeCount, cP
 			activeCount++
 
 			// discourse
-			url, err := discourse(i)
+			url, err := discourse(i, mode)
 			if err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
@@ -263,7 +263,7 @@ func main() {
 
 			issues, _, _ := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
 
-			c, staleCount, activeCount, cPR = process(issues, f)
+			c, staleCount, activeCount, cPR = process(issues, f, mode)
 
 		}
 	case "continue":
