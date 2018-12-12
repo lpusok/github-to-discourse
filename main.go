@@ -30,6 +30,7 @@ const (
 	maxCount       = 1
 	activeTpl      = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). From now on, you can track this issue at: %s"
 	staleTpl       = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). Because this issue has been inactive for more than three months, we will be closing it. If you feel it is still relevant, please open a ticket on Discourse!"
+	defaultMode    = "test"
 )
 
 type RestoredIssue struct {
@@ -149,7 +150,11 @@ func process(issues []*github.Issue, f *os.File) (c, staleCount, activeCount, cP
 }
 
 func main() {
-	mode := os.Args[1:][0]
+	mode := defaultMode
+	if len(os.Args) > 2 {
+		mode := os.Args[1]
+	}
+
 	var baseRepos []Repo
 
 	ctx := context.Background()
