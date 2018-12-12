@@ -371,11 +371,11 @@ func main() {
 			switch i.Done {
 			case discourseDone:
 
-				// dscURL := i.Extra
+				dscURL := i.Extra
 				if isStale(iss) {
-					// comment(iss, fmt.Sprintf(staleTpl, iss.GetUser().GetLogin()))
+					comment(tc, iss, fmt.Sprintf(staleTpl, iss.GetUser().GetLogin()))
 				} else {
-					// comment(iss, fmt.Sprintf(activeTpl, iss.GetUser().GetLogin(), dscURL))
+					comment(tc, iss, fmt.Sprintf(activeTpl, iss.GetUser().GetLogin(), dscURL))
 				}
 				saveState(f, iss, commentDone, "", commentLog)
 				fallthrough
