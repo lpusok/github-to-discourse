@@ -59,7 +59,6 @@ func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
 
-var c, staleCount, activeCount, cPR = 0, 0, 0, 0
 var mode string
 var f, ferr *os.File
 var accessToken string
@@ -67,6 +66,95 @@ var ctx context.Context
 var ts oauth2.TokenSource
 var tc *http.Client
 var client *github.Client
+
+func process(issues []*github.Issue) (c, staleCount, activeCount, cPR int) {
+	for k, i := range issues {
+		// avoid throttling
+		time.Sleep(time.Millisecond + 1000)
+
+		printIssueHeader(len(issues), k, i.GetNumber(), i.GetHTMLURL())
+
+		// skip if PR
+		if i.IsPullRequest() {
+			cPR++
+			printSkipPR(i.GetNumber(), i.GetHTMLURL())
+			fmt.Println()
+			continue
+		}
+
+		// short circuit if reached processing limit
+		if c == maxCount {
+			printMaxCountReached()
+			fmt.Println()
+			break
+		}
+
+		fmt.Println()
+
+		if !isStale(i) {
+
+			printIssueLog("Issue is active")
+			fmt.Println()
+			activeCount++
+
+			// discourse
+			url, err := discourse(i)
+			if err != nil {
+				printIssueLog(err.Error())
+				fmt.Println()
+				continue
+			}
+
+			saveState(f, i, discourseDone, url, fmt.Sprintf(discourseLog, url))
+
+			// comment
+			err = comment(i, fmt.Sprintf(activeTpl, url))
+			if err != nil {
+				printIssueLog(err.Error())
+				fmt.Println()
+				continue
+			}
+		} else {
+
+			staleCount++
+			printIssueLog("Issue is stale")
+			fmt.Println()
+
+			// comment
+			err := comment(i, fmt.Sprintf(staleTpl))
+			if err != nil {
+				printIssueLog(err.Error())
+				fmt.Println()
+				continue
+			}
+		}
+
+		saveState(f, i, commentDone, "", commentLog)
+
+		// close
+		err := close(i)
+		if err != nil {
+			printIssueLog(err.Error())
+			fmt.Println()
+			continue
+		}
+
+		saveState(f, i, closeDone, "", closeLog)
+
+		// lock
+		err = lock(i)
+		if err != nil {
+			printIssueLog(err.Error())
+			fmt.Println()
+			continue
+		}
+
+		saveState(f, i, lockDone, "", lockLog)
+		c++
+	}
+
+	return c, staleCount, activeCount, cPR
+}
 
 func main() {
 	mode = os.Args[1:][0]
@@ -165,6 +253,7 @@ func main() {
 		State: "open",
 	}
 
+	var c, staleCount, activeCount, cPR int
 	switch mode {
 	case "test", "migrate":
 		for j, r := range baseRepos {
@@ -176,7 +265,7 @@ func main() {
 
 			issues, _, _ := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
 
-			process(issues)
+			c, staleCount, activeCount, cPR = process(issues)
 
 		}
 	case "continue":
