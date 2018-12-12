@@ -60,7 +60,7 @@ func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
 
-func process(issues []*github.Issue, f *os.File, mode string) (c, staleCount, activeCount, cPR int) {
+func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (c, staleCount, activeCount, cPR int) {
 	for k, i := range issues {
 		// avoid throttling
 		time.Sleep(time.Millisecond + 1000)
@@ -91,7 +91,7 @@ func process(issues []*github.Issue, f *os.File, mode string) (c, staleCount, ac
 			activeCount++
 
 			// discourse
-			url, err := discourse(i, mode)
+			url, err := discourse(tc, i, mode)
 			if err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
@@ -101,7 +101,7 @@ func process(issues []*github.Issue, f *os.File, mode string) (c, staleCount, ac
 			saveState(f, i, discourseDone, url, fmt.Sprintf(discourseLog, url))
 
 			// comment
-			err = comment(i, fmt.Sprintf(activeTpl, url))
+			err = comment(tc, i, fmt.Sprintf(activeTpl, url))
 			if err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
@@ -114,7 +114,7 @@ func process(issues []*github.Issue, f *os.File, mode string) (c, staleCount, ac
 			fmt.Println()
 
 			// comment
-			err := comment(i, fmt.Sprintf(staleTpl))
+			err := comment(tc, i, fmt.Sprintf(staleTpl))
 			if err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
@@ -125,7 +125,7 @@ func process(issues []*github.Issue, f *os.File, mode string) (c, staleCount, ac
 		saveState(f, i, commentDone, "", commentLog)
 
 		// close
-		err := close(i)
+		err := close(tc, i)
 		if err != nil {
 			printIssueLog(err.Error())
 			fmt.Println()
@@ -135,7 +135,7 @@ func process(issues []*github.Issue, f *os.File, mode string) (c, staleCount, ac
 		saveState(f, i, closeDone, "", closeLog)
 
 		// lock
-		err = lock(i)
+		err = lock(tc, i)
 		if err != nil {
 			printIssueLog(err.Error())
 			fmt.Println()
@@ -263,7 +263,7 @@ func main() {
 
 			issues, _, _ := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
 
-			c, staleCount, activeCount, cPR = process(issues, f, mode)
+			c, staleCount, activeCount, cPR = process(tc, issues, f, mode)
 
 		}
 	case "continue":
