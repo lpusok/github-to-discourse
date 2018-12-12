@@ -59,7 +59,6 @@ func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
 
-var accessToken string
 var ctx context.Context
 var ts oauth2.TokenSource
 var tc *http.Client
@@ -158,10 +157,9 @@ func main() {
 	mode := os.Args[1:][0]
 	var baseRepos []Repo
 
-	accessToken = os.Getenv("GITHUB_ACCESS_TOKEN")
 	ctx = context.Background()
 	ts = oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: accessToken},
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN")},
 	)
 	tc = oauth2.NewClient(ctx, ts)
 	client = github.NewClient(tc)
