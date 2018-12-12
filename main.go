@@ -59,15 +59,13 @@ func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
 
-var mode string
-var f, ferr *os.File
 var accessToken string
 var ctx context.Context
 var ts oauth2.TokenSource
 var tc *http.Client
 var client *github.Client
 
-func process(issues []*github.Issue) (c, staleCount, activeCount, cPR int) {
+func process(issues []*github.Issue, f *os.File) (c, staleCount, activeCount, cPR int) {
 	for k, i := range issues {
 		// avoid throttling
 		time.Sleep(time.Millisecond + 1000)
@@ -157,7 +155,7 @@ func process(issues []*github.Issue) (c, staleCount, activeCount, cPR int) {
 }
 
 func main() {
-	mode = os.Args[1:][0]
+	mode := os.Args[1:][0]
 	var baseRepos []Repo
 
 	accessToken = os.Getenv("GITHUB_ACCESS_TOKEN")
@@ -239,8 +237,8 @@ func main() {
 
 	// c, staleCount, activeCount, cPR := 0, 0, 0, 0
 	var err error
-	f, err = os.OpenFile(stateFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-	ferr, err = os.OpenFile("err.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	f, err := os.OpenFile(stateFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	ferr, err := os.OpenFile("err.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	defer f.Close()
 	defer ferr.Close()
 	if err != nil {
@@ -265,7 +263,7 @@ func main() {
 
 			issues, _, _ := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
 
-			c, staleCount, activeCount, cPR = process(issues)
+			c, staleCount, activeCount, cPR = process(issues, f)
 
 		}
 	case "continue":
