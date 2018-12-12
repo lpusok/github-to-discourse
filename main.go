@@ -56,6 +56,13 @@ type Spec struct {
 	Steps map[string]Step
 }
 
+type RunStats struct {
+	Processed   int
+	Stale       int
+	Active      int
+	PullRequest int
+}
+
 func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
@@ -82,7 +89,7 @@ func isStale(i *github.Issue) bool {
 	return i.GetUpdatedAt().Before(threeMonthsAgo)
 }
 
-func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (c, staleCount, activeCount, cPR int, err error) {
+func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (stats *RunStats, err error) {
 	for k, i := range issues {
 		// avoid throttling
 		time.Sleep(time.Millisecond + 1000)
@@ -91,14 +98,14 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 
 		// skip if PR
 		if i.IsPullRequest() {
-			cPR++
+			stats.PullRequest++
 			printSkipPR(i.GetNumber(), i.GetHTMLURL())
 			fmt.Println()
 			continue
 		}
 
 		// short circuit if reached processing limit
-		if c == maxCount {
+		if stats.Processed == maxCount {
 			printMaxCountReached()
 			fmt.Println()
 			break
@@ -110,7 +117,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 
 			printIssueLog("Issue is active")
 			fmt.Println()
-			activeCount++
+			stats.Active++
 
 			// discourse
 			url, err := discourse(tc, i, mode)
@@ -121,7 +128,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			}
 
 			if err := saveState(f, i, discourseDone, url, fmt.Sprintf(discourseLog, url)); err != nil {
-				return 0, 0, 0, 0, fmt.Errorf("process: %s", err)
+				return nil, fmt.Errorf("process: %s", err)
 			}
 
 			// comment
@@ -133,7 +140,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			}
 		} else {
 
-			staleCount++
+			stats.Stale++
 			printIssueLog("Issue is stale")
 			fmt.Println()
 
@@ -147,7 +154,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 		}
 
 		if err := saveState(f, i, commentDone, "", commentLog); err != nil {
-			return 0, 0, 0, 0, fmt.Errorf("process: %s", err)
+			return nil, fmt.Errorf("process: %s", err)
 		}
 
 		// close
@@ -159,7 +166,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 		}
 
 		if err := saveState(f, i, closeDone, "", closeLog); err != nil {
-			return 0, 0, 0, 0, fmt.Errorf("process: %s", err)
+			return nil, fmt.Errorf("process: %s", err)
 		}
 
 		// lock
@@ -171,12 +178,12 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 		}
 
 		if err := saveState(f, i, lockDone, "", lockLog); err != nil {
-			return 0, 0, 0, 0, fmt.Errorf("process: %s", err)
+			return nil, fmt.Errorf("process: %s", err)
 		}
-		c++
+		stats.Processed++
 	}
 
-	return c, staleCount, activeCount, cPR, nil
+	return stats, nil
 }
 
 func main() {
@@ -297,7 +304,7 @@ func main() {
 		State: "open",
 	}
 
-	var c, staleCount, activeCount, cPR int
+	var stats *RunStats
 	switch mode {
 	case "test", "migrate":
 		for j, r := range baseRepos {
@@ -310,7 +317,7 @@ func main() {
 			issues, _, _ := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
 
 			var err error
-			c, staleCount, activeCount, cPR, err = process(tc, issues, f, mode)
+			stats, err = process(tc, issues, f, mode)
 			if err != nil {
 				fmt.Println(fmt.Sprintf("mode: %s: %s", mode, err))
 				os.Exit(1)
@@ -435,6 +442,6 @@ func main() {
 	fmt.Println("=== Finished processing issues ===")
 	fmt.Println("==================================")
 	fmt.Println()
-	fmt.Println("stale: ", staleCount, "active: ", activeCount, "total processed", c)
-	fmt.Println("PRs: ", cPR)
+	fmt.Println("stale: ", stats.Stale, "active: ", stats.Active, "total processed", stats.Processed)
+	fmt.Println("PRs: ", stats.PullRequest)
 }
