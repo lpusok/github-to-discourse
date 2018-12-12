@@ -60,18 +60,21 @@ func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
 
-func saveState(f *os.File, i *github.Issue, state int, extra string, logmsg string) {
+func saveState(f *os.File, i *github.Issue, state int, extra string, logmsg string) error {
 	line := fmt.Sprintf("%s %d %s\n", i.GetHTMLURL(), state, extra)
 
 	if _, err := f.WriteString(line); err != nil {
-		fmt.Printf("save state: %s", err)
-		os.Exit(1)
+		return fmt.Errorf("save state: %s", err)
 	}
 
-	f.Sync()
+	if err := f.Sync(); err != nil {
+		return fmt.Errorf("save state: sync file: %s", err)
+	}
 
 	fmt.Println()
 	fmt.Println(fmt.Sprintf(logmsg))
+
+	return nil
 }
 
 func isStale(i *github.Issue) bool {
@@ -79,7 +82,7 @@ func isStale(i *github.Issue) bool {
 	return i.GetUpdatedAt().Before(threeMonthsAgo)
 }
 
-func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (c, staleCount, activeCount, cPR int) {
+func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (c, staleCount, activeCount, cPR int, err error) {
 	for k, i := range issues {
 		// avoid throttling
 		time.Sleep(time.Millisecond + 1000)
@@ -117,7 +120,9 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 				continue
 			}
 
-			saveState(f, i, discourseDone, url, fmt.Sprintf(discourseLog, url))
+			if err := saveState(f, i, discourseDone, url, fmt.Sprintf(discourseLog, url)); err != nil {
+				return 0, 0, 0, 0, fmt.Errorf("process: %s", err)
+			}
 
 			// comment
 			err = comment(tc, i, fmt.Sprintf(activeTpl, url))
@@ -141,7 +146,9 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			}
 		}
 
-		saveState(f, i, commentDone, "", commentLog)
+		if err := saveState(f, i, commentDone, "", commentLog); err != nil {
+			return 0, 0, 0, 0, fmt.Errorf("process: %s", err)
+		}
 
 		// close
 		err := close(tc, i)
@@ -151,7 +158,9 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			continue
 		}
 
-		saveState(f, i, closeDone, "", closeLog)
+		if err := saveState(f, i, closeDone, "", closeLog); err != nil {
+			return 0, 0, 0, 0, fmt.Errorf("process: %s", err)
+		}
 
 		// lock
 		err = lock(tc, i)
@@ -161,11 +170,13 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			continue
 		}
 
-		saveState(f, i, lockDone, "", lockLog)
+		if err := saveState(f, i, lockDone, "", lockLog); err != nil {
+			return 0, 0, 0, 0, fmt.Errorf("process: %s", err)
+		}
 		c++
 	}
 
-	return c, staleCount, activeCount, cPR
+	return c, staleCount, activeCount, cPR, nil
 }
 
 func main() {
@@ -298,7 +309,12 @@ func main() {
 
 			issues, _, _ := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
 
-			c, staleCount, activeCount, cPR = process(tc, issues, f, mode)
+			var err error
+			c, staleCount, activeCount, cPR, err = process(tc, issues, f, mode)
+			if err != nil {
+				fmt.Println(fmt.Sprintf("mode: %s: %s", mode, err))
+				os.Exit(1)
+			}
 
 		}
 	case "continue":
