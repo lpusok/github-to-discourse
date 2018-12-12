@@ -177,8 +177,10 @@ func main() {
 		// get spec file
 		resp, err := http.Get("https://bitrise-steplib-collection.s3.amazonaws.com/spec.json")
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			os.Exit(1)
 		}
+		defer resp.Body.Close()
 
 		// read spec file
 		spec, err := ioutil.ReadAll(resp.Body)

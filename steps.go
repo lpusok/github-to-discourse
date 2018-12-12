@@ -62,6 +62,8 @@ func discourse(i *github.Issue) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error posting payload %s: %s", payload, err)
 	}
+	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("could not read response body: %s", err)
@@ -104,6 +106,8 @@ func comment(i *github.Issue, comment string) error {
 	// posting comment to GitHub
 	req, err := http.NewRequest("POST", i.GetCommentsURL(), bytes.NewBuffer(commentBytes))
 	resp, err := tc.Do(req)
+	defer resp.Body.Close()
+
 	if err != nil {
 		return fmt.Errorf("error posting payload %s: %s", commentPayload, err)
 	}
@@ -134,6 +138,8 @@ func close(i *github.Issue) error {
 	}
 
 	resp, err := tc.Do(request)
+	defer resp.Body.Close()
+
 	if err != nil {
 		return fmt.Errorf("error sending request: %s", err)
 	}
@@ -158,6 +164,8 @@ func lock(i *github.Issue) error {
 	}
 
 	resp, err := tc.Do(request)
+	defer resp.Body.Close()
+
 	if err != nil {
 		return fmt.Errorf("error sending request: %s", err)
 	}
