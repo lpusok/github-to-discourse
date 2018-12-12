@@ -306,17 +306,15 @@ func main() {
 
 			owner := fragments[3]
 			repo := fragments[4]
-			num64, err := strconv.ParseInt(fragments[6], 10, 8)
+			num, err := strconv.Atoi(fragments[6])
 			if err != nil {
 				fmt.Println(fmt.Sprintf("could not read stored state: %s", err))
 			}
-			num := int(num64)
 
-			done64, err := strconv.ParseInt(fields[1], 10, 8)
+			done, err := strconv.Atoi(fields[1])
 			if err != nil {
 				fmt.Println(fmt.Sprintf("could not read stored state: %s", err))
 			}
-			done := int(done64)
 
 			extra := ""
 			if done == discourseDone {
