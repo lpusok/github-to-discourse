@@ -223,12 +223,14 @@ func main() {
 
 			// filter to our repositories
 			for _, o := range orgs {
-				if strings.Contains(url, o) {
-					fragments := strings.Split(url, "/")
-					name := fragments[len(fragments)-1]
-					owner := fragments[len(fragments)-2]
+
+				fragments := strings.Split(url, "/")
+				name := fragments[len(fragments)-1]
+				owner := fragments[len(fragments)-2]
+				if owner == o {
 					repo := Repo{owner, name}
 					baseRepos = append(baseRepos, repo)
+					break
 				}
 			}
 
