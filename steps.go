@@ -8,29 +8,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/google/go-github/github"
 )
-
-func saveState(f *os.File, i *github.Issue, state int, extra string, logmsg string) {
-	line := fmt.Sprintf("%s %d %s\n", i.GetHTMLURL(), state, extra)
-
-	if _, err := f.WriteString(line); err != nil {
-		fmt.Printf("save state: %s", err)
-		os.Exit(1)
-	}
-
-	f.Sync()
-
-	fmt.Println()
-	fmt.Println(fmt.Sprintf(logmsg))
-}
-
-func isStale(i *github.Issue) bool {
-	threeMonthsAgo := time.Now().AddDate(0, -3, 0)
-	return i.GetUpdatedAt().Before(threeMonthsAgo)
-}
 
 func discourse(tc *http.Client, i *github.Issue, mode string) (string, error) {
 	// save to discourse

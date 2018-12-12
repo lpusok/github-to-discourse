@@ -60,6 +60,25 @@ func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
 
+func saveState(f *os.File, i *github.Issue, state int, extra string, logmsg string) {
+	line := fmt.Sprintf("%s %d %s\n", i.GetHTMLURL(), state, extra)
+
+	if _, err := f.WriteString(line); err != nil {
+		fmt.Printf("save state: %s", err)
+		os.Exit(1)
+	}
+
+	f.Sync()
+
+	fmt.Println()
+	fmt.Println(fmt.Sprintf(logmsg))
+}
+
+func isStale(i *github.Issue) bool {
+	threeMonthsAgo := time.Now().AddDate(0, -3, 0)
+	return i.GetUpdatedAt().Before(threeMonthsAgo)
+}
+
 func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (c, staleCount, activeCount, cPR int) {
 	for k, i := range issues {
 		// avoid throttling
