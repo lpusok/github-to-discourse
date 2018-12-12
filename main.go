@@ -166,9 +166,14 @@ func main() {
 
 	switch mode {
 	case "test":
-		repos, _, _ := client.Repositories.List(ctx, "", &github.RepositoryListOptions{
+		repos, _, err := client.Repositories.List(ctx, "", &github.RepositoryListOptions{
 			Affiliation: "owner",
 		})
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
 		for _, r := range repos {
 			repo := Repo{r.GetOwner().GetLogin(), r.GetName()}
 			baseRepos = append(baseRepos, repo)
@@ -191,8 +196,7 @@ func main() {
 
 		// unmarshal spec file
 		var data Spec
-		err = json.Unmarshal(spec, &data)
-		if err != nil {
+		if err := json.Unmarshal(spec, &data); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
