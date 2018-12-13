@@ -90,6 +90,7 @@ func isStale(i *github.Issue) bool {
 }
 
 func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (stats *RunStats, err error) {
+	stats = &RunStats{}
 	for k, i := range issues {
 		// avoid throttling
 		time.Sleep(time.Millisecond + 1000)
