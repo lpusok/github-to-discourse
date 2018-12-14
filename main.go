@@ -95,7 +95,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 		// avoid throttling
 		time.Sleep(time.Millisecond + 1000)
 
-		printIssueHeader(len(issues), k, i.GetNumber(), i.GetHTMLURL())
+		printIssueHeader(len(issues), k+1, i.GetNumber(), i.GetHTMLURL())
 
 		// skip if PR
 		if i.IsPullRequest() {
