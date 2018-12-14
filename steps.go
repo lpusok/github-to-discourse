@@ -86,7 +86,14 @@ func comment(tc *http.Client, i *github.Issue, comment string) error {
 
 	// posting comment to GitHub
 	req, err := http.NewRequest("POST", i.GetCommentsURL(), bytes.NewBuffer(commentBytes))
+	if err != nil {
+		return fmt.Errorf("could not create request: %s", err)
+	}
+
 	resp, err := tc.Do(req)
+	if err != nil {
+		return fmt.Errorf("could not send request: %s", err)
+	}
 	defer resp.Body.Close()
 
 	if err != nil {
@@ -119,6 +126,9 @@ func close(tc *http.Client, i *github.Issue) error {
 	}
 
 	resp, err := tc.Do(request)
+	if err != nil {
+		return fmt.Errorf("could not send request: %s", err)
+	}
 	defer resp.Body.Close()
 
 	if err != nil {
@@ -145,6 +155,9 @@ func lock(tc *http.Client, i *github.Issue) error {
 	}
 
 	resp, err := tc.Do(request)
+	if err != nil {
+		return fmt.Errorf("could not send request: %s", err)
+	}
 	defer resp.Body.Close()
 
 	if err != nil {
