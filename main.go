@@ -133,7 +133,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			}
 
 			// comment
-			if err = comment(tc, i, fmt.Sprintf(activeTpl, i.GetUser().GetLogin(), url)); err != nil {
+			if err := comment(tc, i, fmt.Sprintf(activeTpl, i.GetUser().GetLogin(), url)); err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
 				continue
