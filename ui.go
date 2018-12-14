@@ -16,9 +16,7 @@ func printMaxCountReached() {
 
 func printIssueHeader(issuesN int, totalN int, issNum int, url string) {
 	fmt.Println(indentIssueLog(fmt.Sprintf("(%d/%d) Processing issue #%d", issuesN, totalN, issNum)))
-	fmt.Println()
 	fmt.Println(indentIssueLog(fmt.Sprintf("%s", url)))
-	fmt.Println()
 	fmt.Println(indentIssueLog(fmt.Sprintf("%s", strings.Repeat("=", len(url)))))
 	fmt.Println()
 }
