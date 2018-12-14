@@ -21,11 +21,12 @@ func discourse(tc *http.Client, i *github.Issue, mode string) (string, error) {
 	// prepare payload
 	if mode == "test" {
 		message["title"] = prefixWithRunID(i.GetTitle())
+		message["category"] = staffCategory
 	} else {
 		message["title"] = i.GetTitle()
+		message["category"] = buildIssuesCat
 	}
 	message["raw"] = i.GetBody()
-	message["category"] = buildIssuesCat
 
 	payload, err := json.Marshal(message)
 	if err != nil {
