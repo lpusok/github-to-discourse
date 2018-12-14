@@ -33,7 +33,7 @@ const (
 	defaultMode    = "test"
 )
 
-type RestoredIssue struct {
+type restoredIssue struct {
 	URL    string
 	Owner  string
 	Repo   string
@@ -42,21 +42,21 @@ type RestoredIssue struct {
 	Extra  string
 }
 
-type Repo struct {
+type repo struct {
 	Owner string
 	Name  string
 }
 
-type Step struct {
+type step struct {
 	LatestVersionNumber string `json:"latest_version_number"`
 	Versions            map[string]map[string]interface{}
 }
 
-type Spec struct {
-	Steps map[string]Step
+type spec struct {
+	Steps map[string]step
 }
 
-type RunStats struct {
+type runStats struct {
 	Processed   int
 	Stale       int
 	Active      int
@@ -89,8 +89,8 @@ func isStale(i *github.Issue) bool {
 	return i.GetUpdatedAt().Before(threeMonthsAgo)
 }
 
-func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (stats *RunStats, err error) {
-	stats = &RunStats{}
+func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (stats *runStats, err error) {
+	stats = &runStats{}
 	for k, i := range issues {
 		// avoid throttling
 		time.Sleep(time.Millisecond + 1000)
@@ -133,7 +133,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			}
 
 			// comment
-			if err = comment(tc, i, fmt.Sprintf(activeTpl, url)); err != nil {
+			if err = comment(tc, i, fmt.Sprintf(activeTpl, i.GetUser().GetLogin(), url)); err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
 				continue
@@ -145,7 +145,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			fmt.Println()
 
 			// comment
-			if err := comment(tc, i, fmt.Sprintf(staleTpl)); err != nil {
+			if err := comment(tc, i, fmt.Sprintf(staleTpl, i.GetUser().GetLogin())); err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
 				continue
@@ -189,7 +189,7 @@ func main() {
 		mode = os.Args[1]
 	}
 
-	var baseRepos []Repo
+	var baseRepos []repo
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
@@ -209,7 +209,7 @@ func main() {
 		}
 
 		for _, r := range repos {
-			repo := Repo{r.GetOwner().GetLogin(), r.GetName()}
+			repo := repo{r.GetOwner().GetLogin(), r.GetName()}
 			baseRepos = append(baseRepos, repo)
 		}
 	case "migrate":
@@ -219,18 +219,23 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fmt.Printf("warning: %s", err)
+				fmt.Println()
+			}
+		}()
 
 		// read spec file
-		spec, err := ioutil.ReadAll(resp.Body)
+		sp, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
 		// unmarshal spec file
-		var data Spec
-		if err := json.Unmarshal(spec, &data); err != nil {
+		var data spec
+		if err := json.Unmarshal(sp, &data); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -262,7 +267,7 @@ func main() {
 				name := fragments[len(fragments)-1]
 				owner := fragments[len(fragments)-2]
 				if owner == o {
-					repo := Repo{owner, name}
+					repo := repo{owner, name}
 					baseRepos = append(baseRepos, repo)
 					break
 				}
@@ -280,14 +285,25 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	defer f.Close()
+
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Printf("warning: %s", err)
+			fmt.Println()
+		}
+	}()
 
 	ferr, err := os.OpenFile("err.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	defer ferr.Close()
+	defer func() {
+		if err := ferr.Close(); err != nil {
+			fmt.Printf("warning: %s", err)
+			fmt.Println()
+		}
+	}()
 
 	if err != nil {
 		fmt.Printf("opening state file: %s", err)
@@ -299,7 +315,7 @@ func main() {
 		State: "open",
 	}
 
-	var stats *RunStats
+	var stats *runStats
 	switch mode {
 	case "test", "migrate":
 		for j, r := range baseRepos {
@@ -309,7 +325,11 @@ func main() {
 			fmt.Println(strings.Repeat("=", 80))
 			fmt.Println()
 
-			issues, _, _ := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
+			issues, _, err := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
+			if err != nil {
+				fmt.Printf("error getting issues list: %s", err)
+				fmt.Println()
+			}
 
 			stats, err = process(tc, issues, f, mode)
 			if err != nil {
@@ -328,7 +348,7 @@ func main() {
 
 		// get (issue -> last state) map
 		lines := strings.Split(string(content), "\n")
-		issueStates := make(map[string]*RestoredIssue)
+		issueStates := make(map[string]*restoredIssue)
 		for _, l := range lines {
 			if len(l) == 0 {
 				continue
@@ -357,7 +377,7 @@ func main() {
 				extra = fields[2]
 			}
 
-			iss := RestoredIssue{
+			iss := restoredIssue{
 				Owner:  owner,
 				Repo:   repo,
 				IssNum: num,
@@ -404,24 +424,48 @@ func main() {
 			printIssueHeader(len(issueStates), len(issueStates), i.IssNum, i.URL)
 
 			// // continue from next step
+			state := i.Done + 1
 			switch i.Done {
 			case discourseDone:
 
 				dscURL := i.Extra
 				if isStale(iss) {
-					comment(tc, iss, fmt.Sprintf(staleTpl, iss.GetUser().GetLogin()))
+					if err := comment(tc, iss, fmt.Sprintf(staleTpl, iss.GetUser().GetLogin())); err != nil {
+						fmt.Printf("error commenting on github: %s", err)
+						continue
+					}
 				} else {
-					comment(tc, iss, fmt.Sprintf(activeTpl, iss.GetUser().GetLogin(), dscURL))
+					if err := comment(tc, iss, fmt.Sprintf(activeTpl, iss.GetUser().GetLogin(), dscURL)); err != nil {
+						fmt.Printf("error commenting on github: %s", err)
+						continue
+					}
 				}
-				saveState(f, iss, commentDone, "", commentLog)
+
+				if err := saveState(f, iss, commentDone, "", commentLog); err != nil {
+					fmt.Printf("fatal error saving state %d: %s", state, err)
+					os.Exit(1)
+				}
 				fallthrough
 			case commentDone:
-				// close(iss)
-				saveState(f, iss, closeDone, "", closeLog)
+				if err := close(tc, iss); err != nil {
+					fmt.Printf("error closing github issue: %s", err)
+					continue
+				}
+
+				if err := saveState(f, iss, closeDone, "", closeLog); err != nil {
+					fmt.Printf("fatal error saving state %d: %s", state, err)
+					os.Exit(1)
+				}
 				fallthrough
 			case closeDone:
-				// lock(iss)
-				saveState(f, iss, lockDone, "", lockLog)
+				if err := lock(tc, iss); err != nil {
+					fmt.Printf("error locking github issue: %s", err)
+					continue
+				}
+				if err := saveState(f, iss, lockDone, "", lockLog); err != nil {
+					fmt.Printf("fatal error saving state %d: %s", state, err)
+					os.Exit(1)
+				}
 				fallthrough
 			case lockDone:
 				// // nothing to do

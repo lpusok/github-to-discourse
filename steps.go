@@ -13,9 +13,6 @@ import (
 )
 
 func discourse(tc *http.Client, i *github.Issue, mode string) (string, error) {
-	// save to discourse
-	discourseUrl := ""
-
 	message := make(map[string]interface{})
 
 	// prepare payload
@@ -43,9 +40,13 @@ func discourse(tc *http.Client, i *github.Issue, mode string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error posting payload %s: %s", payload, err)
 	}
-	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Printf("warning: could not close response body: %s", err)
+		}
+	}()
 	if err != nil {
 		return "", fmt.Errorf("could not read response body: %s", err)
 	}
@@ -63,14 +64,17 @@ func discourse(tc *http.Client, i *github.Issue, mode string) (string, error) {
 		return "", fmt.Errorf("could not unmarshal response body %s: %s", body, err)
 	}
 
-	m := data.(map[string]interface{})
+	m, ok := data.(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("could not convert to map %s", err)
+	}
 	topicID, err := m["topic_id"].(json.Number).Int64()
 	if err != nil {
 		return "", fmt.Errorf("could not unmarshal response body %s: %s", body, err)
 	}
-	discourseUrl = fmt.Sprintf("https://discuss.bitrise.io/t/%d", topicID)
+	discourseURL := fmt.Sprintf("https://discuss.bitrise.io/t/%d", topicID)
 
-	return discourseUrl, nil
+	return discourseURL, nil
 }
 
 func comment(tc *http.Client, i *github.Issue, comment string) error {
@@ -94,7 +98,11 @@ func comment(tc *http.Client, i *github.Issue, comment string) error {
 	if err != nil {
 		return fmt.Errorf("could not send request: %s", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Printf("warning: could not close response body: %s", err)
+		}
+	}()
 
 	if err != nil {
 		return fmt.Errorf("error posting payload %s: %s", commentPayload, err)
@@ -129,7 +137,11 @@ func close(tc *http.Client, i *github.Issue) error {
 	if err != nil {
 		return fmt.Errorf("could not send request: %s", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Printf("warning: could not close response body: %s", err)
+		}
+	}()
 
 	if err != nil {
 		return fmt.Errorf("error sending request: %s", err)
@@ -158,7 +170,11 @@ func lock(tc *http.Client, i *github.Issue) error {
 	if err != nil {
 		return fmt.Errorf("could not send request: %s", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Printf("warning: could not close response body: %s", err)
+		}
+	}()
 
 	if err != nil {
 		return fmt.Errorf("error sending request: %s", err)
