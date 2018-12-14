@@ -133,8 +133,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			}
 
 			// comment
-			err = comment(tc, i, fmt.Sprintf(activeTpl, url))
-			if err != nil {
+			if err = comment(tc, i, fmt.Sprintf(activeTpl, url)); err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
 				continue
@@ -146,8 +145,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			fmt.Println()
 
 			// comment
-			err := comment(tc, i, fmt.Sprintf(staleTpl))
-			if err != nil {
+			if err := comment(tc, i, fmt.Sprintf(staleTpl)); err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
 				continue
@@ -159,8 +157,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 		}
 
 		// close
-		err := close(tc, i)
-		if err != nil {
+		if err := close(tc, i); err != nil {
 			printIssueLog(err.Error())
 			fmt.Println()
 			continue
@@ -171,8 +168,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 		}
 
 		// lock
-		err = lock(tc, i)
-		if err != nil {
+		if err = lock(tc, i); err != nil {
 			printIssueLog(err.Error())
 			fmt.Println()
 			continue
@@ -279,8 +275,6 @@ func main() {
 
 	}
 
-	// c, staleCount, activeCount, cPR := 0, 0, 0, 0
-	var err error
 	f, err := os.OpenFile(stateFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Println(err)
@@ -317,7 +311,6 @@ func main() {
 
 			issues, _, _ := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
 
-			var err error
 			stats, err = process(tc, issues, f, mode)
 			if err != nil {
 				fmt.Println(fmt.Sprintf("mode: %s: %s", mode, err))
