@@ -55,20 +55,15 @@ func discourse(tc *http.Client, i *github.Issue, mode string) (string, error) {
 	}
 
 	//  unmarshal response body
-	var data interface{}
 	decoder := json.NewDecoder(strings.NewReader(string(body)))
 	decoder.UseNumber()
-	err = decoder.Decode(&data)
-	//err = json.Unmarshal(body, &data)
-	if err != nil {
+
+	var data map[string]interface{}
+	if err := decoder.Decode(&data); err != nil {
 		return "", fmt.Errorf("could not unmarshal response body %s: %s", body, err)
 	}
 
-	m, ok := data.(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("could not convert to map %s", err)
-	}
-	topicID, err := m["topic_id"].(json.Number).Int64()
+	topicID, err := data["topic_id"].(json.Number).Int64()
 	if err != nil {
 		return "", fmt.Errorf("could not unmarshal response body %s: %s", body, err)
 	}

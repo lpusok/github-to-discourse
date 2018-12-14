@@ -168,7 +168,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 		}
 
 		// lock
-		if err = lock(tc, i); err != nil {
+		if err := lock(tc, i); err != nil {
 			printIssueLog(err.Error())
 			fmt.Println()
 			continue
@@ -185,7 +185,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 
 func main() {
 	mode := defaultMode
-	if len(os.Args) > 2 {
+	if len(os.Args) > 1 {
 		mode = os.Args[1]
 	}
 
