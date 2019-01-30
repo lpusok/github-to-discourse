@@ -203,10 +203,6 @@ func loadRepos(loader string) []repo {
 	case "migrate":
 		l := bitriseSteplibLoader{}
 		baseRepos = l.Load()
-		fmt.Printf("found %d repos, querying open issues", len(baseRepos))
-		fmt.Println()
-		fmt.Println()
-
 	}
 
 	return baseRepos
@@ -219,6 +215,10 @@ func main() {
 	}
 
 	baseRepos := loadRepos(mode)
+
+	fmt.Printf("found %d repos, querying open issues", len(baseRepos))
+	fmt.Println()
+	fmt.Println()
 
 	f, err := os.OpenFile(stateFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
