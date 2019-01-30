@@ -96,98 +96,85 @@ func saveState(f *os.File, i *github.Issue, state int, extra string, logmsg stri
 	return nil
 }
 
-func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (stats *runStats, err error) {
+func process(tc *http.Client, i *github.Issue, f *os.File, mode string, stats *runStats) error {
 	stats = &runStats{}
-	for k, i := range issues {
-		// avoid throttling
-		time.Sleep(time.Millisecond + 1000)
 
-		printIssueHeader(len(issues), k+1, i.GetNumber(), i.GetHTMLURL())
+	// avoid throttling
+	time.Sleep(time.Millisecond + 1000)
 
-		// skip if PR
-		if i.IsPullRequest() {
-			stats.PullRequest++
-			printSkipPR(i.GetNumber(), i.GetHTMLURL())
-			fmt.Println()
-			continue
-		}
-
-		// short circuit if reached processing limit
-		if stats.Processed == maxCount {
-			printMaxCountReached()
-			fmt.Println()
-			break
-		}
-
+	// skip if PR
+	if i.IsPullRequest() {
+		stats.PullRequest++
+		printSkipPR(i.GetNumber(), i.GetHTMLURL())
 		fmt.Println()
-
-		if !isStale(i) {
-
-			printIssueLog("Issue is active")
-			fmt.Println()
-			stats.Active++
-
-			// discourse
-			url, err := discourse(i, mode)
-			if err != nil {
-				printIssueLog(err.Error())
-				fmt.Println()
-				continue
-			}
-
-			if err := saveState(f, i, discourseDone, url, fmt.Sprintf(discourseLog, url)); err != nil {
-				return nil, fmt.Errorf("process: %s", err)
-			}
-
-			// comment
-			if err := comment(i, fmt.Sprintf(activeTpl, i.GetUser().GetLogin(), url)); err != nil {
-				printIssueLog(err.Error())
-				fmt.Println()
-				continue
-			}
-		} else {
-
-			stats.Stale++
-			printIssueLog("Issue is stale")
-			fmt.Println()
-
-			// comment
-			if err := comment(i, fmt.Sprintf(staleTpl, i.GetUser().GetLogin())); err != nil {
-				printIssueLog(err.Error())
-				fmt.Println()
-				continue
-			}
-		}
-
-		if err := saveState(f, i, commentDone, "", commentLog); err != nil {
-			return nil, fmt.Errorf("process: %s", err)
-		}
-
-		// close
-		if err := close(i); err != nil {
-			printIssueLog(err.Error())
-			fmt.Println()
-			continue
-		}
-
-		if err := saveState(f, i, closeDone, "", closeLog); err != nil {
-			return nil, fmt.Errorf("process: %s", err)
-		}
-
-		// lock
-		if err := lock(i); err != nil {
-			printIssueLog(err.Error())
-			fmt.Println()
-			continue
-		}
-
-		if err := saveState(f, i, lockDone, "", lockLog); err != nil {
-			return nil, fmt.Errorf("process: %s", err)
-		}
-		stats.Processed++
+		return nil
 	}
 
-	return stats, nil
+	// short circuit if reached processing limit
+	if stats.Processed == maxCount {
+		printMaxCountReached()
+		fmt.Println()
+		return nil
+	}
+
+	fmt.Println()
+
+	if !isStale(i) {
+
+		printIssueLog("Issue is active")
+		fmt.Println()
+		stats.Active++
+
+		// discourse
+		url, err := discourse(i, mode)
+		if err != nil {
+			return err
+		}
+
+		if err := saveState(f, i, discourseDone, url, fmt.Sprintf(discourseLog, url)); err != nil {
+			return fmt.Errorf("process: %s", err)
+		}
+
+		// comment
+		if err := comment(i, fmt.Sprintf(activeTpl, i.GetUser().GetLogin(), url)); err != nil {
+			return err
+		}
+	} else {
+
+		stats.Stale++
+		printIssueLog("Issue is stale")
+		fmt.Println()
+
+		// comment
+		if err := comment(i, fmt.Sprintf(staleTpl, i.GetUser().GetLogin())); err != nil {
+			return err
+		}
+	}
+
+	if err := saveState(f, i, commentDone, "", commentLog); err != nil {
+		return fmt.Errorf("process: %s", err)
+	}
+
+	// close
+	if err := close(i); err != nil {
+		return err
+	}
+
+	if err := saveState(f, i, closeDone, "", closeLog); err != nil {
+		return fmt.Errorf("process: %s", err)
+	}
+
+	// lock
+	if err := lock(i); err != nil {
+		return err
+	}
+
+	if err := saveState(f, i, lockDone, "", lockLog); err != nil {
+		return fmt.Errorf("process: %s", err)
+	}
+	stats.Processed++
+
+	return nil
 }
 
 func loadRepos(loader string) []repo {
@@ -247,15 +234,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	var stats *runStats
+	stats := runStats{}
 	switch mode {
 	case "test", "migrate":
 		issues := githubOpenLoader{}.Load(baseRepos)
-		stats, err = process(tc, issues, f, mode)
-		if err != nil {
-			fmt.Println(fmt.Sprintf("mode: %s: %s", mode, err))
-			os.Exit(1)
+		for k, i := range issues {
+			printIssueHeader(len(issues), k+1, i.GetNumber(), i.GetHTMLURL())
+			err = process(tc, i, f, mode, &stats)
+			if err != nil {
+				printIssueLog(err.Error())
+				fmt.Println()
+				os.Exit(1)
+			}
 		}
+
 	case "continue":
 		continueStartedLoader{}.Load(f)
 	}
