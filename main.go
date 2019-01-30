@@ -33,6 +33,12 @@ const (
 	defaultMode    = "test"
 )
 
+var (
+	client *github.Client
+	ctx    context.Context
+	tc     *http.Client // todo: check if this can be eliminated
+)
+
 type restoredIssue struct {
 	URL    string
 	Owner  string
@@ -61,6 +67,16 @@ type runStats struct {
 	Stale       int
 	Active      int
 	PullRequest int
+}
+
+func init() {
+	ctx = context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN")},
+	)
+	tc = oauth2.NewClient(ctx, ts)
+	client = github.NewClient(tc)
+
 }
 
 func prefixWithRunID(str string) string {
@@ -116,7 +132,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			stats.Active++
 
 			// discourse
-			url, err := discourse(tc, i, mode)
+			url, err := discourse(i, mode)
 			if err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
@@ -128,7 +144,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			}
 
 			// comment
-			if err := comment(tc, i, fmt.Sprintf(activeTpl, i.GetUser().GetLogin(), url)); err != nil {
+			if err := comment(i, fmt.Sprintf(activeTpl, i.GetUser().GetLogin(), url)); err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
 				continue
@@ -140,7 +156,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 			fmt.Println()
 
 			// comment
-			if err := comment(tc, i, fmt.Sprintf(staleTpl, i.GetUser().GetLogin())); err != nil {
+			if err := comment(i, fmt.Sprintf(staleTpl, i.GetUser().GetLogin())); err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
 				continue
@@ -152,7 +168,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 		}
 
 		// close
-		if err := close(tc, i); err != nil {
+		if err := close(i); err != nil {
 			printIssueLog(err.Error())
 			fmt.Println()
 			continue
@@ -163,7 +179,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 		}
 
 		// lock
-		if err := lock(tc, i); err != nil {
+		if err := lock(i); err != nil {
 			printIssueLog(err.Error())
 			fmt.Println()
 			continue
@@ -185,13 +201,6 @@ func main() {
 	}
 
 	var baseRepos []repo
-
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN")},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
 
 	switch mode {
 	case "test":
@@ -425,12 +434,12 @@ func main() {
 
 				dscURL := i.Extra
 				if isStale(iss) {
-					if err := comment(tc, iss, fmt.Sprintf(staleTpl, iss.GetUser().GetLogin())); err != nil {
+					if err := comment(iss, fmt.Sprintf(staleTpl, iss.GetUser().GetLogin())); err != nil {
 						fmt.Printf("error commenting on github: %s", err)
 						continue
 					}
 				} else {
-					if err := comment(tc, iss, fmt.Sprintf(activeTpl, iss.GetUser().GetLogin(), dscURL)); err != nil {
+					if err := comment(iss, fmt.Sprintf(activeTpl, iss.GetUser().GetLogin(), dscURL)); err != nil {
 						fmt.Printf("error commenting on github: %s", err)
 						continue
 					}
@@ -442,7 +451,7 @@ func main() {
 				}
 				fallthrough
 			case commentDone:
-				if err := close(tc, iss); err != nil {
+				if err := close(iss); err != nil {
 					fmt.Printf("error closing github issue: %s", err)
 					continue
 				}
@@ -453,7 +462,7 @@ func main() {
 				}
 				fallthrough
 			case closeDone:
-				if err := lock(tc, iss); err != nil {
+				if err := lock(iss); err != nil {
 					fmt.Printf("error locking github issue: %s", err)
 					continue
 				}

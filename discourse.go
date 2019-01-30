@@ -12,7 +12,7 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func discourse(tc *http.Client, i *github.Issue, mode string) (string, error) {
+func discourse(i *github.Issue, mode string) (string, error) {
 	message := make(map[string]interface{})
 
 	// prepare payload

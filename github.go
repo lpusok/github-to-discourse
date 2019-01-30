@@ -16,7 +16,7 @@ func isStale(i *github.Issue) bool {
 	return i.GetUpdatedAt().Before(threeMonthsAgo)
 }
 
-func comment(tc *http.Client, i *github.Issue, comment string) error {
+func comment(i *github.Issue, comment string) error {
 	// prepare payload
 	commentPayload := map[string]interface{}{
 		"body": comment,
@@ -57,7 +57,7 @@ func comment(tc *http.Client, i *github.Issue, comment string) error {
 	return nil
 }
 
-func close(tc *http.Client, i *github.Issue) error {
+func close(i *github.Issue) error {
 	payload := map[string]interface{}{
 		"state": "closed",
 	}
@@ -96,7 +96,7 @@ func close(tc *http.Client, i *github.Issue) error {
 	return nil
 }
 
-func lock(tc *http.Client, i *github.Issue) error {
+func lock(i *github.Issue) error {
 	// // lock
 	url := fmt.Sprintf("%s/lock", i.GetURL())
 	request, err := http.NewRequest("PUT", url, bytes.NewBuffer([]byte{}))
