@@ -84,11 +84,6 @@ func saveState(f *os.File, i *github.Issue, state int, extra string, logmsg stri
 	return nil
 }
 
-func isStale(i *github.Issue) bool {
-	threeMonthsAgo := time.Now().AddDate(0, -3, 0)
-	return i.GetUpdatedAt().Before(threeMonthsAgo)
-}
-
 func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (stats *runStats, err error) {
 	stats = &runStats{}
 	for k, i := range issues {
