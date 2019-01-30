@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -177,6 +178,42 @@ func process(tc *http.Client, i *github.Issue, f *os.File, mode string, stats *r
 	return nil
 }
 
+func continueProcessing(iss *github.Issue, i restoredIssue, f *os.File) (int, string, error) {
+	// // continue from next step
+	switch i.Done {
+	case discourseDone:
+
+		dscURL := i.Extra
+		if isStale(iss) {
+			if err := comment(iss, fmt.Sprintf(staleTpl, iss.GetUser().GetLogin())); err != nil {
+				return commentDone, commentLog, fmt.Errorf("error commenting on github: %s", err)
+			}
+		} else {
+			if err := comment(iss, fmt.Sprintf(activeTpl, iss.GetUser().GetLogin(), dscURL)); err != nil {
+				fmt.Printf("error commenting on github: %s", err)
+			}
+		}
+
+		fallthrough
+	case commentDone:
+		if err := close(iss); err != nil {
+			return commentDone, commentLog, fmt.Errorf("error closing github issue: %s", err)
+		}
+
+		fallthrough
+	case closeDone:
+		if err := lock(iss); err != nil {
+			return closeDone, closeLog, fmt.Errorf("error locking github issue: %s", err)
+
+		}
+
+		fallthrough
+	case lockDone:
+		// // nothing to do
+	}
+	return lockDone, lockLog, nil
+}
+
 func loadRepos(loader string) []repo {
 	var baseRepos []repo
 
@@ -249,7 +286,45 @@ func main() {
 		}
 
 	case "continue":
-		continueStartedLoader{}.Load(f)
+		issueStates := continueStartedLoader{}.Load(f)
+		k := 0
+		for _, i := range issueStates {
+
+			if k == maxCount {
+				printMaxCountReached()
+				break
+			}
+
+			// // get specific issue
+			iss, resp, err := client.Issues.Get(ctx, i.Owner, i.Repo, i.IssNum)
+			if err != nil {
+				printIssueLog(fmt.Sprintf("error getting issue: %s", err))
+				continue
+			}
+			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+				body, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					printIssueLog(fmt.Sprintf("could not read response body: %s", err))
+					continue
+				}
+				printIssueLog(fmt.Sprintf("api error: %s", body))
+				continue
+			}
+
+			printIssueHeader(len(issueStates), len(issueStates), i.IssNum, i.URL)
+
+			state, logmsg, err := continueProcessing(iss, *i, f)
+
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			if err := saveState(f, iss, state, "", logmsg); err != nil {
+				fmt.Println(fmt.Printf("fatal error saving state %d: %s", state, err))
+				os.Exit(1)
+			}
+			k++
+		}
 	}
 
 	fmt.Println("==================================")
