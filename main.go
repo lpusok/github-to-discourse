@@ -194,12 +194,7 @@ func process(tc *http.Client, issues []*github.Issue, f *os.File, mode string) (
 	return stats, nil
 }
 
-func main() {
-	mode := defaultMode
-	if len(os.Args) > 1 {
-		mode = os.Args[1]
-	}
-
+func loadRepos(mode string) []repo {
 	var baseRepos []repo
 
 	switch mode {
@@ -283,6 +278,17 @@ func main() {
 		fmt.Println()
 
 	}
+
+	return baseRepos
+}
+
+func main() {
+	mode := defaultMode
+	if len(os.Args) > 1 {
+		mode = os.Args[1]
+	}
+
+	baseRepos := loadRepos(mode)
 
 	f, err := os.OpenFile(stateFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
