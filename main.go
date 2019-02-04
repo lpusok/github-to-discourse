@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -219,10 +221,10 @@ func loadRepos(loader string) []repo {
 	var baseRepos []repo
 
 	switch loader {
-	case "test":
+	case "owner":
 		l := githubOwnerLoader{client: client}
 		baseRepos = l.Load()
-	case "migrate":
+	case "steplib":
 		l := bitriseSteplibLoader{}
 		baseRepos = l.Load()
 	case "cherry":
@@ -233,23 +235,40 @@ func loadRepos(loader string) []repo {
 	return baseRepos
 }
 
+func loaderMode(src string) string {
+	if src == "steplib" {
+		return "steplib"
+	}
+
+	items := strings.Split(src, ",")
+
+	if _, err := url.Parse(items[0]); err != nil {
+		return "owner"
+	}
+
+	return "cherry"
+}
+
 func main() {
 	mode := defaultMode
 	if len(os.Args) > 1 {
 		mode = os.Args[1]
 	}
 
-	var reposArg string
+	var repoSrc string
+	var chkpt string
 
-	flag.StringVar(&reposArg, "repos", "", "--repos=[<url>,<url>,...]")
+	flag.StringVar(&repoSrc, "repos", "", "--repos=[<url>, <url>, ...] | [<org|owner>, <org|owner>, ...] | steplib (cherry pick repos you wish to process)")
+	flag.StringVar(&chkpt, "chkpt", "", "--chkpt=checkpoint.log (continue from state stored in checkpoint file)")
 
 	flag.Parse()
 
-	if reposArg != "" {
-		mode = "cherry" // todo: enum type for mode
+	if repoSrc == "" && chkpt == "" {
+		fmt.Println("must provide repo source or checkpoint file")
+		os.Exit(1)
 	}
 
-	baseRepos := loadRepos(mode)
+	baseRepos := loadRepos(loaderMode(repoSrc))
 
 	fmt.Printf("found %d repos, querying open issues", len(baseRepos))
 	fmt.Println()
