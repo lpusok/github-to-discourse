@@ -18,7 +18,7 @@ import (
 const (
 	staffCategory  = 29
 	buildIssuesCat = 11
-	stateFile      = "data.txt"
+	chkptLog       = "chkpt.log"
 	discourseDone  = 1
 	discourseLog   = "      Migrated to Discourse: %s"
 	commentDone    = 2
@@ -274,14 +274,14 @@ func main() {
 	fmt.Println()
 	fmt.Println()
 
-	f, err := os.OpenFile(stateFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	fchkpt, err := os.OpenFile(chkptLog, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	defer func() {
-		if err := f.Close(); err != nil {
+		if err := fchkpt.Close(); err != nil {
 			fmt.Printf("warning: %s", err)
 			fmt.Println()
 		}
@@ -310,7 +310,7 @@ func main() {
 		issues := githubOpenLoader{}.Load(baseRepos)
 		for k, i := range issues {
 			printIssueHeader(len(issues), k+1, i.GetNumber(), i.GetHTMLURL())
-			err = process(tc, i, f, mode, &stats)
+			err = process(tc, i, fchkpt, mode, &stats)
 			if err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
@@ -319,7 +319,7 @@ func main() {
 		}
 
 	case "continue":
-		issueStates := continueStartedLoader{}.Load(f)
+		issueStates := continueStartedLoader{}.Load()
 		k := 0
 		for _, i := range issueStates {
 
@@ -346,13 +346,13 @@ func main() {
 
 			printIssueHeader(len(issueStates), len(issueStates), i.IssNum, i.URL)
 
-			state, logmsg, err := continueProcessing(iss, *i, f)
+			state, logmsg, err := continueProcessing(iss, *i, fchkpt)
 
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			if err := saveState(f, iss, state, "", logmsg); err != nil {
+			if err := saveState(fchkpt, iss, state, "", logmsg); err != nil {
 				fmt.Println(fmt.Printf("fatal error saving state %d: %s", state, err))
 				os.Exit(1)
 			}

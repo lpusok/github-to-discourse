@@ -39,9 +39,9 @@ func (il githubOpenLoader) Load(baseRepos []repo) []*github.Issue {
 	return all
 }
 
-func (il continueStartedLoader) Load(f *os.File) map[string]*restoredIssue {
+func (il continueStartedLoader) Load() map[string]*restoredIssue {
 	// load state file
-	content, err := ioutil.ReadFile(stateFile)
+	content, err := ioutil.ReadFile(chkptLog)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("could not read restore file: %s", err))
 		os.Exit(1)
