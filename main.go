@@ -100,87 +100,6 @@ func saveState(f *os.File, i *github.Issue, state int, extra string, logmsg stri
 	return nil
 }
 
-func process(tc *http.Client, i *github.Issue, f *os.File, mode string, stats *runStats) error {
-	stats = &runStats{}
-
-	// avoid throttling
-	time.Sleep(time.Millisecond + 1000)
-
-	// skip if PR
-	if i.IsPullRequest() {
-		stats.PullRequest++
-		printSkipPR(i.GetNumber(), i.GetHTMLURL())
-		fmt.Println()
-		return nil
-	}
-
-	// short circuit if reached processing limit
-	if stats.Processed == maxCount {
-		printMaxCountReached()
-		fmt.Println()
-		return nil
-	}
-
-	fmt.Println()
-
-	if !isStale(i) {
-
-		printIssueLog("Issue is active")
-		fmt.Println()
-		stats.Active++
-
-		// discourse
-		url, err := discourse(i, mode)
-		if err != nil {
-			return err
-		}
-
-		if err := saveState(f, i, discourseDone, url, fmt.Sprintf(discourseLog, url)); err != nil {
-			return fmt.Errorf("process: %s", err)
-		}
-
-		// comment
-		if err := comment(i, fmt.Sprintf(activeTpl, i.GetUser().GetLogin(), url)); err != nil {
-			return err
-		}
-	} else {
-
-		stats.Stale++
-		printIssueLog("Issue is stale")
-		fmt.Println()
-
-		// comment
-		if err := comment(i, fmt.Sprintf(staleTpl, i.GetUser().GetLogin())); err != nil {
-			return err
-		}
-	}
-
-	if err := saveState(f, i, commentDone, "", commentLog); err != nil {
-		return fmt.Errorf("process: %s", err)
-	}
-
-	// close
-	if err := close(i); err != nil {
-		return err
-	}
-
-	if err := saveState(f, i, closeDone, "", closeLog); err != nil {
-		return fmt.Errorf("process: %s", err)
-	}
-
-	// lock
-	if err := lock(i); err != nil {
-		return err
-	}
-
-	if err := saveState(f, i, lockDone, "", lockLog); err != nil {
-		return fmt.Errorf("process: %s", err)
-	}
-	stats.Processed++
-
-	return nil
-}
-
 func continueProcessing(iss *github.Issue, i restoredIssue, f *os.File) (int, string, error) {
 	// // continue from next step
 	switch i.Done {
@@ -304,19 +223,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	stats := runStats{}
+	var stats runStats
 	switch mode {
 	case "test", "migrate":
 		issues := githubOpenLoader{}.Load(baseRepos)
-		for k, i := range issues {
-			printIssueHeader(len(issues), k+1, i.GetNumber(), i.GetHTMLURL())
-			err = process(tc, i, fchkpt, mode, &stats)
+		run := dryRun{}
+		for _, i := range issues {
+			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
+			err = run.process(tc, i, fchkpt, mode)
 			if err != nil {
 				printIssueLog(err.Error())
 				fmt.Println()
 				os.Exit(1)
 			}
+			// avoid throttling
+			time.Sleep(time.Millisecond + 1000)
 		}
+
+		stats = run.stats
 
 	case "continue":
 		issueStates := continueStartedLoader{}.Load()
