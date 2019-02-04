@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/google/go-github/github"
 )
@@ -19,13 +18,10 @@ type liveRun struct {
 	chkptf *os.File
 }
 
-func (run dryRun) process(tc *http.Client, i *github.Issue, f *os.File, mode string) error {
-
-	// skip if PR
+func (run dryRun) process(i *github.Issue) {
 	if i.IsPullRequest() {
 		run.stats.PullRequest++
 		fmt.Println(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
-		return nil
 	}
 
 	if !isStale(i) {
@@ -36,36 +32,18 @@ func (run dryRun) process(tc *http.Client, i *github.Issue, f *os.File, mode str
 		fmt.Println(fmt.Sprintf("%s is stale", i.GetHTMLURL()))
 	}
 	run.stats.Processed++
-
-	return nil
 }
 
 func (run *liveRun) process(i *github.Issue, mode string) error {
-
-	// avoid throttling
-	time.Sleep(time.Millisecond + 1000)
-
-	// skip if PR
 	if i.IsPullRequest() {
 		run.stats.PullRequest++
-		printSkipPR(i.GetNumber(), i.GetHTMLURL())
-		fmt.Println()
+		fmt.Println(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
 		return nil
 	}
-
-	// short circuit if reached processing limit
-	if run.stats.Processed == maxCount {
-		printMaxCountReached()
-		fmt.Println()
-		return nil
-	}
-
-	fmt.Println()
 
 	if !isStale(i) {
 
-		printIssueLog("Issue is active")
-		fmt.Println()
+		fmt.Println(fmt.Sprintf("%s is active", i.GetHTMLURL()))
 		run.stats.Active++
 
 		// discourse

@@ -30,7 +30,7 @@ const (
 	maxCount       = 1
 	activeTpl      = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). From now on, you can track this issue at: %s"
 	staleTpl       = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). Because this issue has been inactive for more than three months, we will be closing it. If you feel it is still relevant, please open a ticket on Discourse!"
-	defaultMode    = "test"
+	defaultMode    = "dry"
 )
 
 var (
@@ -193,19 +193,6 @@ func main() {
 	fmt.Println()
 	fmt.Println()
 
-	fchkpt, err := os.OpenFile(chkptLog, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	defer func() {
-		if err := fchkpt.Close(); err != nil {
-			fmt.Printf("warning: %s", err)
-			fmt.Println()
-		}
-	}()
-
 	ferr, err := os.OpenFile("err.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Println(err)
@@ -225,15 +212,41 @@ func main() {
 
 	var stats runStats
 	switch mode {
-	case "test", "migrate":
+	case "dry":
 		issues := githubOpenLoader{}.Load(baseRepos)
 		run := dryRun{}
 		for _, i := range issues {
 			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
-			err = run.process(tc, i, fchkpt, mode)
-			if err != nil {
-				printIssueLog(err.Error())
+			run.process(i)
+			// avoid throttling
+			time.Sleep(time.Millisecond + 1000)
+		}
+
+		stats = run.stats
+	case "live":
+		fchkpt, err := os.OpenFile(chkptLog, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		defer func() {
+			if err := fchkpt.Close(); err != nil {
+				fmt.Printf("warning: %s", err)
 				fmt.Println()
+			}
+		}()
+
+		issues := githubOpenLoader{}.Load(baseRepos)
+		run := liveRun{
+			tc:     tc,
+			chkptf: fchkpt,
+		}
+		for _, i := range issues {
+			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
+			err = run.process(i, mode)
+			if err != nil {
+				fmt.Println(fmt.Sprintf("error processing %s: %s", i.GetHTMLURL(), err))
 				os.Exit(1)
 			}
 			// avoid throttling
