@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -224,6 +225,9 @@ func loadRepos(loader string) []repo {
 	case "migrate":
 		l := bitriseSteplibLoader{}
 		baseRepos = l.Load()
+	case "cherry":
+		l := cherryPickLoader{}
+		baseRepos = l.Load()
 	}
 
 	return baseRepos
@@ -233,6 +237,16 @@ func main() {
 	mode := defaultMode
 	if len(os.Args) > 1 {
 		mode = os.Args[1]
+	}
+
+	var reposArg string
+
+	flag.StringVar(&reposArg, "repos", "", "--repos=[<url>,<url>,...]")
+
+	flag.Parse()
+
+	if reposArg != "" {
+		mode = "cherry" // todo: enum type for mode
 	}
 
 	baseRepos := loadRepos(mode)

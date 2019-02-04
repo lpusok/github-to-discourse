@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -20,6 +22,8 @@ type githubOwnerLoader struct {
 }
 
 type bitriseSteplibLoader struct{}
+
+type cherryPickLoader struct{}
 
 func (l githubOwnerLoader) Load() []repo {
 	var baseRepos []repo
@@ -104,4 +108,29 @@ func (l bitriseSteplibLoader) Load() []repo {
 	}
 
 	return baseRepos
+}
+
+func (l cherryPickLoader) Load() []repo {
+	arg := flag.Lookup("repos")
+	if arg == nil {
+		fmt.Println(fmt.Sprintf("`repos` argument missing"))
+		os.Exit(1)
+	}
+
+	repos := make([]repo, 0)
+	for _, repoURL := range strings.Split(arg.Value.String(), ",") {
+		if _, err := url.Parse(repoURL); err != nil {
+			// todo: log warning using bitrise log pkg
+			fmt.Println(fmt.Sprintf("repo url %s invalid: %s", repoURL, err))
+			continue
+		}
+
+		fragments := strings.Split(repoURL, "/")
+		repos = append(repos, repo{
+			Name:  fragments[len(fragments)-1],
+			Owner: fragments[len(fragments)-2],
+		})
+	}
+
+	return repos
 }
