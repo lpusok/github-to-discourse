@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -83,19 +83,20 @@ func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
 }
 
-func saveState(f *os.File, i *github.Issue, state int, extra string, logmsg string) error {
-	line := fmt.Sprintf("%s %d %s\n", i.GetHTMLURL(), state, extra)
+func saveState(f *os.File, chkpt restoredIssue) error {
 
-	if _, err := f.WriteString(line); err != nil {
-		return fmt.Errorf("save state: %s", err)
+	data, err := json.Marshal(chkpt)
+	if err != nil {
+		return err
+	}
+
+	if _, err := f.Write(data); err != nil {
+		return err
 	}
 
 	if err := f.Sync(); err != nil {
-		return fmt.Errorf("save state: sync file: %s", err)
+		return err
 	}
-
-	fmt.Println()
-	fmt.Println(fmt.Sprintf(logmsg))
 
 	return nil
 }
@@ -215,6 +216,14 @@ func main() {
 	case "dry":
 		issues := githubOpenLoader{}.Load(baseRepos)
 		run := dryRun{}
+
+		tbc, err := continueStartedLoader{}.Load()
+		if err != nil {
+			fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
+			os.Exit(1)
+		}
+		run.finish(tbc)
+
 		for _, i := range issues {
 			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
 			run.process(i)
@@ -224,7 +233,7 @@ func main() {
 
 		stats = run.stats
 	case "live":
-		fchkpt, err := os.OpenFile(chkptLog, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+		fchkpt, err := os.OpenFile(chkptLog, os.O_WRONLY|os.O_CREATE, 0644)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -242,6 +251,15 @@ func main() {
 			tc:     tc,
 			chkptf: fchkpt,
 		}
+
+		tbc, err := continueStartedLoader{}.Load()
+		if err != nil {
+			fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
+			os.Exit(1)
+		}
+
+		run.finish(tbc)
+
 		for _, i := range issues {
 			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
 			err = run.process(i, mode)
@@ -252,49 +270,7 @@ func main() {
 			// avoid throttling
 			time.Sleep(time.Millisecond + 1000)
 		}
-
 		stats = run.stats
-
-	case "continue":
-		issueStates := continueStartedLoader{}.Load()
-		k := 0
-		for _, i := range issueStates {
-
-			if k == maxCount {
-				printMaxCountReached()
-				break
-			}
-
-			// // get specific issue
-			iss, resp, err := client.Issues.Get(ctx, i.Owner, i.Repo, i.IssNum)
-			if err != nil {
-				printIssueLog(fmt.Sprintf("error getting issue: %s", err))
-				continue
-			}
-			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-				body, err := ioutil.ReadAll(resp.Body)
-				if err != nil {
-					printIssueLog(fmt.Sprintf("could not read response body: %s", err))
-					continue
-				}
-				printIssueLog(fmt.Sprintf("api error: %s", body))
-				continue
-			}
-
-			printIssueHeader(len(issueStates), len(issueStates), i.IssNum, i.URL)
-
-			state, logmsg, err := continueProcessing(iss, *i, fchkpt)
-
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			if err := saveState(fchkpt, iss, state, "", logmsg); err != nil {
-				fmt.Println(fmt.Printf("fatal error saving state %d: %s", state, err))
-				os.Exit(1)
-			}
-			k++
-		}
 	}
 
 	fmt.Println("==================================")

@@ -1,10 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -39,64 +39,25 @@ func (il githubOpenLoader) Load(baseRepos []repo) []*github.Issue {
 	return all
 }
 
-func (il continueStartedLoader) Load() map[string]*restoredIssue {
-	// load state file
+func (il continueStartedLoader) Load() (*github.Issue, error) {
 	content, err := ioutil.ReadFile(chkptLog)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("could not read restore file: %s", err))
+		fmt.Println(fmt.Sprintf("read checkpoint file: %s", err))
 		os.Exit(1)
 	}
 
-	// get (issue -> last state) map
-	lines := strings.Split(string(content), "\n")
-	issueStates := make(map[string]*restoredIssue)
-	for _, l := range lines {
-		if len(l) == 0 {
-			continue
-		}
-
-		// parse line
-		fields := strings.Split(l, " ")
-
-		url := fields[0]
-		fragments := strings.Split(url, "/")
-
-		owner := fragments[3]
-		repo := fragments[4]
-		num, err := strconv.Atoi(fragments[6])
-		if err != nil {
-			fmt.Println(fmt.Sprintf("could not read stored state: %s", err))
-		}
-
-		done, err := strconv.Atoi(fields[1])
-		if err != nil {
-			fmt.Println(fmt.Sprintf("could not read stored state: %s", err))
-		}
-
-		extra := ""
-		if done == discourseDone {
-			extra = fields[2]
-		}
-
-		iss := restoredIssue{
-			Owner:  owner,
-			Repo:   repo,
-			IssNum: num,
-			URL:    url,
-			Done:   done,
-			Extra:  extra,
-		}
-
-		// populate map: update or insert value
-		if i, ok := issueStates[iss.URL]; ok {
-			if done > i.Done {
-				i.Done = done
-			}
-		} else {
-			issueStates[url] = &iss
-		}
-
+	var restored restoredIssue
+	if err := json.Unmarshal([]byte(content), &restored); err != nil {
+		return nil, err
 	}
 
-	return issueStates
+	issue, resp, err := client.Issues.Get(ctx, restored.Owner, restored.Repo, restored.IssNum)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("fetch %s from github: %s", restored.Repo, err))
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("fetch %s from github: %s", restored.Repo, resp.Status)
+	}
+
+	return issue, nil
 }
