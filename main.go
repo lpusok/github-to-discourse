@@ -170,14 +170,12 @@ func loaderMode(src string) string {
 }
 
 func main() {
-	mode := defaultMode
-	if len(os.Args) > 1 {
-		mode = os.Args[1]
-	}
 
+	var mode string
 	var repoSrc string
 	var chkpt string
 
+	flag.StringVar(&mode, "run-mode", defaultMode, "--runmode=dry|live (dry: only prints what would happen, but modifies nothing)")
 	flag.StringVar(&repoSrc, "repos", "", "--repos=[<url>, <url>, ...] | [<org|owner>, <org|owner>, ...] | steplib (cherry pick repos you wish to process)")
 	flag.StringVar(&chkpt, "chkpt", "", "--chkpt=checkpoint.log (continue from state stored in checkpoint file)")
 
