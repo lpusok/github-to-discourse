@@ -111,14 +111,8 @@ func (l bitriseSteplibLoader) Load() []repo {
 }
 
 func (l cherryPickLoader) Load() []repo {
-	arg := flag.Lookup("repos")
-	if arg == nil {
-		fmt.Println(fmt.Sprintf("`repos` argument missing"))
-		os.Exit(1)
-	}
-
 	repos := make([]repo, 0)
-	for _, repoURL := range strings.Split(arg.Value.String(), ",") {
+	for _, repoURL := range flag.Args() {
 		if _, err := url.Parse(repoURL); err != nil {
 			// todo: log warning using bitrise log pkg
 			fmt.Println(fmt.Sprintf("repo url %s invalid: %s", repoURL, err))
