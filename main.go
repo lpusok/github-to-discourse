@@ -155,38 +155,24 @@ func loadRepos(loader string) []repo {
 	return baseRepos
 }
 
-func loaderMode(src string) string {
-	if src == "steplib" {
-		return "steplib"
-	}
-
-	items := strings.Split(src, ",")
-
-	if _, err := url.Parse(items[0]); err != nil {
-		return "owner"
-	}
-
-	return "cherry"
-}
-
 func main() {
 
 	var mode string
-	var repoSrc string
+	var loader string
 	var chkpt string
 
 	flag.StringVar(&mode, "run-mode", defaultMode, "--runmode=dry|live (dry: only prints what would happen, but modifies nothing)")
-	flag.StringVar(&repoSrc, "repos", "", "--repos=[<url>, <url>, ...] | [<org|owner>, <org|owner>, ...] | steplib (cherry pick repos you wish to process)")
+	flag.StringVar(&loader, "repo-loader", "cherry", "--repo-loader=cherry|owner|steplib (repo loader to use to process arguments)")
 	flag.StringVar(&chkpt, "chkpt", "", "--chkpt=checkpoint.log (continue from state stored in checkpoint file)")
 
 	flag.Parse()
 
-	if repoSrc == "" && chkpt == "" {
+	if loader == "" && chkpt == "" {
 		fmt.Println("must provide repo source or checkpoint file")
 		os.Exit(1)
 	}
 
-	baseRepos := loadRepos(loaderMode(repoSrc))
+	baseRepos := loadRepos(loader)
 
 	fmt.Printf("found %d repos, querying open issues", len(baseRepos))
 	fmt.Println()
