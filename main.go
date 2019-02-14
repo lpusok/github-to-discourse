@@ -176,6 +176,15 @@ func main() {
 	fmt.Println()
 	fmt.Println()
 
+	if _, err := os.Stat(chkptLog); os.IsNotExist(err) {
+		chkptf, err := os.Create(chkptLog)
+		if err != nil {
+			fmt.Println("error: create checkpoint file: %s")
+			os.Exit(1)
+		}
+		defer chkptf.Close()
+	}
+
 	var stats runStats
 	switch mode {
 	case "dry":
