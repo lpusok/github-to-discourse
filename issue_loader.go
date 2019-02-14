@@ -25,6 +25,7 @@ func (il githubOpenLoader) Load(baseRepos []repo) []*github.Issue {
 		if err != nil {
 			fmt.Printf("fetch issues: %s", err)
 			fmt.Println()
+			continue
 		}
 
 		all = append(all, issues...)
