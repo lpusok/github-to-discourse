@@ -20,15 +20,10 @@ func (il githubOpenLoader) Load(baseRepos []repo) []*github.Issue {
 		State: "open",
 	}
 	for j, r := range baseRepos {
-		fmt.Println()
-		fmt.Println(strings.Repeat("=", 80))
-		fmt.Println(fmt.Sprintf("  processing repo (%d/%d): %s", len(baseRepos), j, r.Name))
-		fmt.Println(strings.Repeat("=", 80))
-		fmt.Println()
 
 		issues, _, err := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
 		if err != nil {
-			fmt.Printf("error getting issues list: %s", err)
+			fmt.Printf("fetch issues: %s", err)
 			fmt.Println()
 		}
 
