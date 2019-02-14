@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -42,8 +41,11 @@ func (il githubOpenLoader) Load(baseRepos []repo) []*github.Issue {
 func (il continueStartedLoader) Load() (*github.Issue, error) {
 	content, err := ioutil.ReadFile(chkptLog)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("read checkpoint file: %s", err))
-		os.Exit(1)
+		return nil, fmt.Errorf("read checkpoint file: %s", err)
+	}
+	if len(content) == 0 {
+		fmt.Println("checkpoint file empty")
+		return nil, nil
 	}
 
 	var restored restoredIssue
