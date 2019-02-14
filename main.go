@@ -176,23 +176,6 @@ func main() {
 	fmt.Println()
 	fmt.Println()
 
-	ferr, err := os.OpenFile("err.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	defer func() {
-		if err := ferr.Close(); err != nil {
-			fmt.Printf("warning: %s", err)
-			fmt.Println()
-		}
-	}()
-
-	if err != nil {
-		fmt.Printf("opening state file: %s", err)
-		os.Exit(1)
-	}
-
 	var stats runStats
 	switch mode {
 	case "dry":
