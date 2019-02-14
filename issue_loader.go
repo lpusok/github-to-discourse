@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"strings"
 
 	"github.com/google/go-github/github"
 )
@@ -19,7 +18,7 @@ func (il githubOpenLoader) Load(baseRepos []repo) []*github.Issue {
 	opts := github.IssueListByRepoOptions{
 		State: "open",
 	}
-	for j, r := range baseRepos {
+	for _, r := range baseRepos {
 
 		issues, _, err := client.Issues.ListByRepo(ctx, r.Owner, r.Name, &opts)
 		if err != nil {
