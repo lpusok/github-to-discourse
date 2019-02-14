@@ -18,7 +18,7 @@ type liveRun struct {
 	chkptf *os.File
 }
 
-func (run dryRun) process(i *github.Issue) {
+func (run *dryRun) process(i *github.Issue) {
 	if i.IsPullRequest() {
 		run.stats.PullRequest++
 		fmt.Println(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
