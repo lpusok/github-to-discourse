@@ -188,6 +188,7 @@ func main() {
 	var stats runStats
 	switch mode {
 	case "dry":
+		fmt.Println("running in 'dry' mode")
 		issues := githubOpenLoader{}.Load(baseRepos)
 		run := dryRun{}
 
@@ -207,6 +208,7 @@ func main() {
 
 		stats = run.stats
 	case "live":
+		fmt.Println("running in 'live' mode")
 		fchkpt, err := os.OpenFile(chkptLog, os.O_WRONLY|os.O_CREATE, 0644)
 		if err != nil {
 			fmt.Println(err)
