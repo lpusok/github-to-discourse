@@ -197,7 +197,9 @@ func main() {
 			fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
 			os.Exit(1)
 		}
-		run.finish(tbc)
+		if tbc != nil {
+			run.finish(tbc)
+		}
 
 		for _, i := range issues {
 			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
@@ -234,7 +236,9 @@ func main() {
 			os.Exit(1)
 		}
 
-		run.finish(tbc)
+		if tbc != nil {
+			run.finish(tbc)
+		}
 
 		for _, i := range issues {
 			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
