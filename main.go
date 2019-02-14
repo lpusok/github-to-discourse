@@ -6,9 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
