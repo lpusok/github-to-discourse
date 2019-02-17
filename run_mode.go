@@ -46,6 +46,11 @@ func (run *liveRun) process(i *github.Issue) error {
 		return nil
 	}
 
+	checkpoint := restoredIssue{
+		Repo: i.GetHTMLURL(),
+		Owner: i.GetRepository().GetOwner().GetLogin(),
+		IssNum: i.GetNumber()
+	}
 	if !isStale(i) {
 
 		fmt.Println(fmt.Sprintf("%s is active", i.GetHTMLURL()))
@@ -61,12 +66,8 @@ func (run *liveRun) process(i *github.Issue) error {
 			return err
 		}
 
-		if err := saveState(run.chkptf, restoredIssue{
-			Repo: i.GetHTMLURL(),
-			Done: discourseDone,
-			Owner: i.GetRepository().GetOwner().GetLogin(),
-			IssNum: i.GetNumber()
-		}); err != nil {
+		checkpoint.Done = discourseDone
+		if err := saveState(run.chkptf, checkpoint); err != nil {
 			return fmt.Errorf("process: %s", err)
 		}
 
@@ -86,12 +87,8 @@ func (run *liveRun) process(i *github.Issue) error {
 		}
 	}
 
-	if err := saveState(run.chkptf, restoredIssue{
-		Repo: i.GetHTMLURL(),
-		Done: commentDone,
-		Owner: i.GetRepository().GetOwner().GetLogin(),
-		IssNum: i.GetNumber()),
-	}); err != nil {
+	checkpoint.Done = commentDone
+	if err := saveState(run.chkptf, checkpoint); err != nil {
 		return fmt.Errorf("process: %s", err)
 	}
 
@@ -100,12 +97,8 @@ func (run *liveRun) process(i *github.Issue) error {
 		return err
 	}
 
-	if err := saveState(run.chkptf, restoredIssue{
-		Repo: i.GetHTMLURL(),
-		Done: closeDone,
-		Owner: i.GetRepository().GetOwner().GetLogin(),
-		IssNum: i.GetNumber(),
-	}); err != nil {
+	checkpoint.Done = closeDone
+	if err := saveState(run.chkptf, checkpoint); err != nil {
 		return fmt.Errorf("process: %s", err)
 	}
 
@@ -114,12 +107,8 @@ func (run *liveRun) process(i *github.Issue) error {
 		return err
 	}
 
-	if err := saveState(run.chkptf, restoredIssue{
-		Repo: i.GetHTMLURL(),
-		Done: lockDone,
-		Owner: i.GetRepository().GetOwner().GetLogin(),
-		IssNum: i.GetNumber()
-	}); err != nil {
+	checkpoint.Done = lockDone
+	if err := saveState(run.chkptf, checkpoint); err != nil {
 		return fmt.Errorf("process: %s", err)
 	}
 	run.stats.Processed++
