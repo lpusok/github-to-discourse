@@ -255,7 +255,7 @@ func main() {
 
 		for _, i := range issues {
 			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
-			err = run.process(i, mode)
+			err = run.process(i)
 			if err != nil {
 				fmt.Println(fmt.Sprintf("error processing GET %s: %s", i.GetHTMLURL(), err))
 				os.Exit(1)

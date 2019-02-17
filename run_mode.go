@@ -39,7 +39,7 @@ func (run dryRun) finish(i *github.Issue) {
 	fmt.Println(fmt.Printf("continuing %s", i.GetHTMLURL()))
 }
 
-func (run *liveRun) process(i *github.Issue, mode string) error {
+func (run *liveRun) process(i *github.Issue) error {
 	if i.IsPullRequest() {
 		run.stats.PullRequest++
 		fmt.Println(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
