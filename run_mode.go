@@ -49,7 +49,7 @@ func (run *liveRun) process(i *github.Issue) error {
 	checkpoint := restoredIssue{
 		Repo: i.GetHTMLURL(),
 		Owner: i.GetRepository().GetOwner().GetLogin(),
-		IssNum: i.GetNumber()
+		IssNum: i.GetNumber(),
 	}
 
 	var commentTpl string
