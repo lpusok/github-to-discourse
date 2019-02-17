@@ -170,6 +170,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	if discourseAPIKey == "" {
+		fmt.Println("DISCOURSE_API_KEY empty")
+		os.Exit(1)
+	}
+
+	if discourseAPIUser == "" {
+		fmt.Println("DISCOURSE_API_USER empty")
+		os.Exit(1)
+	}
+
 	baseRepos := loadRepos(loader)
 
 	fmt.Printf("found %d repos, querying open issues", len(baseRepos))

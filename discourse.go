@@ -12,6 +12,11 @@ import (
 	"github.com/google/go-github/github"
 )
 
+var (
+	discourseAPIKey = os.Getenv("DISCOURSE_API_KEY")
+	discourseAPIUser = os.Getenv("DISCOURSE_API_USER")
+)
+
 func discourse(i *github.Issue, mode string) (string, error) {
 	message := make(map[string]interface{})
 
@@ -33,9 +38,7 @@ func discourse(i *github.Issue, mode string) (string, error) {
 	//////////////////////////
 	// post to discourse /////
 	//////////////////////////
-	key := os.Getenv("DISCOURSE_API_KEY")
-	user := os.Getenv("DISCOURSE_USER")
-	url := fmt.Sprintf("https://discuss.bitrise.io/posts.json?api_key=%s&api_username=%s", key, user)
+	url := fmt.Sprintf("https://discuss.bitrise.io/posts.json?api_key=%s&api_username=%s", discourseAPIKey, discourseAPIUser)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		return "", fmt.Errorf("error posting payload %s: %s", payload, err)
