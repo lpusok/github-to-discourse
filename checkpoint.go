@@ -21,7 +21,11 @@ func saveState(f *os.File, chkpt restoredIssue) error {
 		return err
 	}
 
-	if _, err := f.Write(data); err != nil {
+	if err := os.Truncate(chkptLog, 0); err != nil {
+		return err
+	}
+
+	if _, err := f.WriteAt(data, 0); err != nil {
 		return err
 	}
 
