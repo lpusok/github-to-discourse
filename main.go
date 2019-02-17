@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
@@ -38,15 +37,6 @@ var (
 	runID string
 )
 
-type restoredIssue struct {
-	URL    string
-	Owner  string
-	Repo   string
-	IssNum int
-	Done   int
-	Extra  string
-}
-
 type repo struct {
 	Owner string
 	Name  string
@@ -80,24 +70,6 @@ func init() {
 
 func prefixWithRunID(str string) string {
 	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
-}
-
-func saveState(f *os.File, chkpt restoredIssue) error {
-
-	data, err := json.Marshal(chkpt)
-	if err != nil {
-		return err
-	}
-
-	if _, err := f.Write(data); err != nil {
-		return err
-	}
-
-	if err := f.Sync(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func continueProcessing(iss *github.Issue, i restoredIssue, f *os.File) (int, string, error) {
