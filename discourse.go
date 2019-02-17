@@ -15,20 +15,17 @@ import (
 var (
 	discourseAPIKey = os.Getenv("DISCOURSE_API_KEY")
 	discourseAPIUser = os.Getenv("DISCOURSE_API_USER")
+	discourseCategoryID int
 )
 
-func discourse(i *github.Issue, mode string) (string, error) {
+func discourse(i *github.Issue, title string, content string, category int) (string, error) {
 	message := make(map[string]interface{})
 
 	// prepare payload
-	if mode == "test" {
-		message["title"] = prefixWithRunID(i.GetTitle())
-		message["category"] = staffCategory
-	} else {
-		message["title"] = i.GetTitle()
-		message["category"] = buildIssuesCat
-	}
-	message["raw"] = i.GetBody()
+
+	message["title"] = title
+	message["category"] = category
+	message["raw"] = content
 
 	payload, err := json.Marshal(message)
 	if err != nil {

@@ -35,6 +35,7 @@ var (
 	client *github.Client
 	ctx    context.Context
 	tc     *http.Client // todo: check if this can be eliminated
+	runID string
 )
 
 type restoredIssue struct {
@@ -162,6 +163,8 @@ func main() {
 	flag.StringVar(&mode, "run-mode", defaultMode, "--runmode=dry|live (dry: only prints what would happen, but modifies nothing)")
 	flag.StringVar(&loader, "repo-loader", "cherry", "--repo-loader=cherry|owner|steplib (repo loader to use to process arguments)")
 	flag.StringVar(&chkpt, "chkpt", "", "--chkpt=checkpoint.log (continue from state stored in checkpoint file)")
+	flag.StringVar(&runID, "run-id", "", "--run-id=<string> (created resources will have 'myrunid' baked into title for easier identification)")
+	flag.IntVar(&discourseCategoryID, "discourse-category-id", staffCategory, "--discourse-category-id=<int> (discourse category to post topics to)")
 
 	flag.Parse()
 

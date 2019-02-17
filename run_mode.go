@@ -52,7 +52,11 @@ func (run *liveRun) process(i *github.Issue, mode string) error {
 		run.stats.Active++
 
 		// discourse
-		url, err := discourse(i, mode)
+		title := i.GetTitle()
+		if runID != "" {
+			title = fmt.Sprintf("[test][%s] %s", runID, i.GetTitle())
+		}
+		url, err := discourse(i, title, i.GetBody(), discourseCategoryID)
 		if err != nil {
 			return err
 		}
