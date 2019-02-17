@@ -244,7 +244,7 @@ func main() {
 			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
 			err = run.process(i, mode)
 			if err != nil {
-				fmt.Println(fmt.Sprintf("error processing %s: %s", i.GetHTMLURL(), err))
+				fmt.Println(fmt.Sprintf("error processing GET %s: %s", i.GetHTMLURL(), err))
 				os.Exit(1)
 			}
 			// avoid throttling
