@@ -51,6 +51,8 @@ func (run *liveRun) process(i *github.Issue) error {
 		Owner: i.GetRepository().GetOwner().GetLogin(),
 		IssNum: i.GetNumber()
 	}
+
+	var commentTpl string
 	if !isStale(i) {
 
 		fmt.Println(fmt.Sprintf("%s is active", i.GetHTMLURL()))
@@ -71,20 +73,18 @@ func (run *liveRun) process(i *github.Issue) error {
 			return fmt.Errorf("process: %s", err)
 		}
 
-		// comment
-		if err := comment(i, fmt.Sprintf(activeTpl, i.GetUser().GetLogin(), url)); err != nil {
-			return err
-		}
+		commentTpl = activeTpl
 	} else {
 
 		run.stats.Stale++
 		printIssueLog("Issue is stale")
 		fmt.Println()
 
-		// comment
-		if err := comment(i, fmt.Sprintf(staleTpl, i.GetUser().GetLogin())); err != nil {
-			return err
-		}
+		commentTpl = staleTpl
+	}
+
+	if err := comment(i, fmt.Sprintf(commentTpl, i.GetUser().GetLogin())); err != nil {
+		return err
 	}
 
 	checkpoint.Done = commentDone
