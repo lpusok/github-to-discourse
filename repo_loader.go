@@ -25,6 +25,24 @@ type bitriseSteplibLoader struct{}
 
 type cherryPickLoader struct{}
 
+func loadRepos(loader string) []repo {
+	var baseRepos []repo
+
+	switch loader {
+	case "owner":
+		l := githubOwnerLoader{client: client}
+		baseRepos = l.Load()
+	case "steplib":
+		l := bitriseSteplibLoader{}
+		baseRepos = l.Load()
+	case "cherry":
+		l := cherryPickLoader{}
+		baseRepos = l.Load()
+	}
+
+	return baseRepos
+}
+
 func (l githubOwnerLoader) Load() []repo {
 	var baseRepos []repo
 	repos, _, err := l.client.Repositories.List(ctx, "", &github.RepositoryListOptions{

@@ -68,64 +68,6 @@ func init() {
 
 }
 
-func prefixWithRunID(str string) string {
-	return fmt.Sprintf("[TEST][%s] %s", time.Now().Format(time.RFC3339), str)
-}
-
-func continueProcessing(iss *github.Issue, i restoredIssue, f *os.File) (int, string, error) {
-	// // continue from next step
-	switch i.Done {
-	case discourseDone:
-
-		dscURL := i.Extra
-		if isStale(iss) {
-			if err := comment(iss, fmt.Sprintf(staleTpl, iss.GetUser().GetLogin())); err != nil {
-				return commentDone, commentLog, fmt.Errorf("error commenting on github: %s", err)
-			}
-		} else {
-			if err := comment(iss, fmt.Sprintf(activeTpl, iss.GetUser().GetLogin(), dscURL)); err != nil {
-				fmt.Printf("error commenting on github: %s", err)
-			}
-		}
-
-		fallthrough
-	case commentDone:
-		if err := close(iss); err != nil {
-			return commentDone, commentLog, fmt.Errorf("error closing github issue: %s", err)
-		}
-
-		fallthrough
-	case closeDone:
-		if err := lock(iss); err != nil {
-			return closeDone, closeLog, fmt.Errorf("error locking github issue: %s", err)
-
-		}
-
-		fallthrough
-	case lockDone:
-		// // nothing to do
-	}
-	return lockDone, lockLog, nil
-}
-
-func loadRepos(loader string) []repo {
-	var baseRepos []repo
-
-	switch loader {
-	case "owner":
-		l := githubOwnerLoader{client: client}
-		baseRepos = l.Load()
-	case "steplib":
-		l := bitriseSteplibLoader{}
-		baseRepos = l.Load()
-	case "cherry":
-		l := cherryPickLoader{}
-		baseRepos = l.Load()
-	}
-
-	return baseRepos
-}
-
 func main() {
 
 	var mode string
