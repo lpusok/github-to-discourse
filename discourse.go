@@ -18,6 +18,18 @@ var (
 	discourseCategoryID int
 )
 
+func init() {
+	if discourseAPIKey == "" {
+		fmt.Println("DISCOURSE_API_KEY empty")
+		os.Exit(1)
+	}
+
+	if discourseAPIUser == "" {
+		fmt.Println("DISCOURSE_API_USER empty")
+		os.Exit(1)
+	}
+}
+
 func discourse(i *github.Issue, title string, content string, category int) (string, error) {
 	message := make(map[string]interface{})
 
