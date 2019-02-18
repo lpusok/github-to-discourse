@@ -1,12 +1,15 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/google/go-github/github"
 )
+
+var runID  string
 
 type dryRun struct {
 	stats runStats
@@ -16,6 +19,10 @@ type liveRun struct {
 	stats  runStats
 	tc     *http.Client
 	chkptf *os.File
+}
+
+func init() {
+	flag.StringVar(&runID, "run-id", "", "--run-id=<string> (created resources will have 'myrunid' baked into title for easier identification)")
 }
 
 func (run *dryRun) process(i *github.Issue) {

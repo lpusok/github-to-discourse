@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -28,6 +29,8 @@ func init() {
 		fmt.Println("DISCOURSE_API_USER empty")
 		os.Exit(1)
 	}
+
+	flag.IntVar(&discourseCategoryID, "discourse-category-id", staffCategory, "--discourse-category-id=<int> (discourse category to post topics to)")
 }
 
 func discourse(i *github.Issue, title string, content string, category int) (string, error) {
