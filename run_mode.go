@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/google/go-github/github"
 )
@@ -128,4 +129,21 @@ func (run *liveRun) process(i *github.Issue) error {
 func (run *liveRun) finish(i *github.Issue) error {
 	// todo: check if status has changed, e.g.: already closed
 	return nil
+}
+
+func (run *liveRun) run(issues []*github.Issue, unfinished *github.Issue) (runStats, error) {
+
+	if unfinished != nil {
+		run.finish(unfinished)
+	}
+
+	for _, i := range issues {
+		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
+		if err := run.process(i); err != nil {
+			return run.stats, fmt.Errorf("process issue %s: %s", i.GetHTMLURL(), err) // todo: return stats so far or null value object?
+		}
+		// avoid throttling
+		time.Sleep(time.Millisecond + 1000)
+	}
+	return run.stats, nil
 }

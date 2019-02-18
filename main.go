@@ -149,21 +149,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if tbc != nil {
-			run.finish(tbc)
-		}
-
-		for _, i := range issues {
-			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
-			err = run.process(i)
-			if err != nil {
-				fmt.Println(fmt.Sprintf("error processing GET %s: %s", i.GetHTMLURL(), err))
-				os.Exit(1)
-			}
-			// avoid throttling
-			time.Sleep(time.Millisecond + 1000)
-		}
-		stats = run.stats
+		stats, err = run.run(issues, tbc)
 	}
 
 	fmt.Println("==================================")
