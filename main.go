@@ -110,22 +110,22 @@ func main() {
 			fmt.Println()
 		}
 	}()
+
+	tbc, err := continueStartedLoader{}.Load()
+	if err != nil {
+		fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
+		os.Exit(1)
+	}
+	if tbc != nil {
+		run.finish(tbc)
+	}
+	issues := githubOpenLoader{}.Load(baseRepos)
+
 	var stats runStats
 	switch mode {
 	case "dry":
 		fmt.Println("running in 'dry' mode")
-		issues := githubOpenLoader{}.Load(baseRepos)
 		run := dryRun{}
-
-		tbc, err := continueStartedLoader{}.Load()
-		if err != nil {
-			fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
-			os.Exit(1)
-		}
-		if tbc != nil {
-			run.finish(tbc)
-		}
-
 		for _, i := range issues {
 			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
 			run.process(i)
@@ -136,19 +136,10 @@ func main() {
 		stats = run.stats
 	case "live":
 		fmt.Println("running in 'live' mode")
-
-		issues := githubOpenLoader{}.Load(baseRepos)
 		run := liveRun{
 			tc:     tc,
 			chkptf: fchkpt,
 		}
-
-		tbc, err := continueStartedLoader{}.Load()
-		if err != nil {
-			fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
-			os.Exit(1)
-		}
-
 		stats, err = run.run(issues, tbc)
 	}
 
