@@ -116,9 +116,6 @@ func main() {
 		fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
 		os.Exit(1)
 	}
-	if tbc != nil {
-		run.finish(tbc)
-	}
 	issues := githubOpenLoader{}.Load(baseRepos)
 
 	var stats runStats
