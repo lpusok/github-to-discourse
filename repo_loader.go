@@ -18,6 +18,15 @@ type repo struct {
 	Name  string
 }
 
+type step struct {
+	LatestVersionNumber string `json:"latest_version_number"`
+	Versions            map[string]map[string]interface{}
+}
+
+type spec struct {
+	Steps map[string]step
+}
+
 type repoLoader interface {
 	Load() []repo
 }
