@@ -73,7 +73,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	baseRepos, err := loadRepos(loader)
+	var baseRepos []repo
+	var err error
+	switch loader {
+	case "owner":
+		baseRepos, err = githubOwnerLoader{client: client}.Load()
+	case "steplib":
+		baseRepos, err = bitriseSteplibLoader{}.Load()
+	case "cherry":
+		baseRepos, err = cherryPickLoader{}.Load()
+	default:
+		baseRepos, err = nil, fmt.Errorf("unkown loader %s", loader)
+	}
 	if err != nil {
 		fmt.Println("error loading repos using %s loader: %s", loader, err)
 		os.Exit(1)
