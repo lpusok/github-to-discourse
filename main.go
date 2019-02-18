@@ -98,6 +98,18 @@ func main() {
 		defer chkptf.Close()
 	}
 
+	fchkpt, err := os.OpenFile(chkptLog, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	defer func() {
+		if err := fchkpt.Close(); err != nil {
+			fmt.Printf("warning: %s", err)
+			fmt.Println()
+		}
+	}()
 	var stats runStats
 	switch mode {
 	case "dry":
@@ -124,18 +136,6 @@ func main() {
 		stats = run.stats
 	case "live":
 		fmt.Println("running in 'live' mode")
-		fchkpt, err := os.OpenFile(chkptLog, os.O_WRONLY|os.O_CREATE, 0644)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		defer func() {
-			if err := fchkpt.Close(); err != nil {
-				fmt.Printf("warning: %s", err)
-				fmt.Println()
-			}
-		}()
 
 		issues := githubOpenLoader{}.Load(baseRepos)
 		run := liveRun{
