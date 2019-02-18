@@ -34,7 +34,7 @@ var (
 	client *github.Client
 	ctx    context.Context
 	tc     *http.Client // todo: check if this can be eliminated
-	runID string
+	runID  string
 )
 
 type runStats struct {

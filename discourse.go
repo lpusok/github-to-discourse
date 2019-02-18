@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	discourseAPIKey = os.Getenv("DISCOURSE_API_KEY")
-	discourseAPIUser = os.Getenv("DISCOURSE_API_USER")
+	discourseAPIKey     = os.Getenv("DISCOURSE_API_KEY")
+	discourseAPIUser    = os.Getenv("DISCOURSE_API_USER")
 	discourseCategoryID int
 )
 
