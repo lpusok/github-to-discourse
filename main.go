@@ -126,14 +126,7 @@ func main() {
 	case "dry":
 		fmt.Println("running in 'dry' mode")
 		run := dryRun{}
-		for _, i := range issues {
-			fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
-			run.process(i)
-			// avoid throttling
-			time.Sleep(time.Millisecond + 1000)
-		}
-
-		stats = run.stats
+		stats, _ = run.run(issues, tbc)
 	case "live":
 		fmt.Println("running in 'live' mode")
 		run := liveRun{

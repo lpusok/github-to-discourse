@@ -47,6 +47,17 @@ func (run dryRun) finish(i *github.Issue) {
 	fmt.Println(fmt.Printf("continuing %s", i.GetHTMLURL()))
 }
 
+func (run *dryRun) run(issues []*github.Issue, unfinished *github.Issue) (runStats, error) {
+	for _, i := range issues {
+		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
+		run.process(i)
+		// avoid throttling
+		time.Sleep(time.Millisecond + 1000)
+	}
+
+	return run.stats, nil
+}
+
 func (run *liveRun) process(i *github.Issue) error {
 	if i.IsPullRequest() {
 		run.stats.PullRequest++
