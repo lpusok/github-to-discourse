@@ -73,7 +73,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	baseRepos := loadRepos(loader)
+	baseRepos, err := loadRepos(loader)
+	if err != nil {
+		fmt.Println("error loading repos using %s loader: %s", loader, err)
+		os.Exit(1)
+	}
 
 	fmt.Printf("found %d repos, querying open issues", len(baseRepos))
 	fmt.Println()

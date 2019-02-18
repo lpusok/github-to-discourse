@@ -28,7 +28,7 @@ type spec struct {
 }
 
 type repoLoader interface {
-	Load() []repo
+	Load() ([]repo, error)
 }
 
 type githubOwnerLoader struct {
@@ -39,32 +39,26 @@ type bitriseSteplibLoader struct{}
 
 type cherryPickLoader struct{}
 
-func loadRepos(loader string) []repo {
-	var baseRepos []repo
-
+func loadRepos(loader string) ([]repo, error) {
 	switch loader {
 	case "owner":
-		l := githubOwnerLoader{client: client}
-		baseRepos = l.Load()
+		return githubOwnerLoader{client: client}.Load()
 	case "steplib":
-		l := bitriseSteplibLoader{}
-		baseRepos = l.Load()
+		return bitriseSteplibLoader{}.Load()
 	case "cherry":
-		l := cherryPickLoader{}
-		baseRepos = l.Load()
+		return cherryPickLoader{}.Load()
+	default:
+		return nil, fmt.Errorf("unkown loader %s", loader)
 	}
-
-	return baseRepos
 }
 
-func (l githubOwnerLoader) Load() []repo {
+func (l githubOwnerLoader) Load() ([]repo, error) {
 	var baseRepos []repo
 	repos, _, err := l.client.Repositories.List(ctx, "", &github.RepositoryListOptions{
 		Affiliation: "owner",
 	})
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, fmt.Errorf("fetch repositories owned by authenticated user: %s", err)
 	}
 
 	for _, r := range repos {
@@ -72,16 +66,15 @@ func (l githubOwnerLoader) Load() []repo {
 		baseRepos = append(baseRepos, repo)
 	}
 
-	return baseRepos
+	return baseRepos, nil
 }
 
-func (l bitriseSteplibLoader) Load() []repo {
+func (l bitriseSteplibLoader) Load() ([]repo, error) {
 	var baseRepos []repo
 	// get spec file
 	resp, err := http.Get("https://bitrise-steplib-collection.s3.amazonaws.com/spec.json")
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, fmt.Errorf("fetch steplib json: %s", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -93,15 +86,13 @@ func (l bitriseSteplibLoader) Load() []repo {
 	// read spec file
 	sp, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, fmt.Errorf("read steplib json: %s", err)
 	}
 
 	// unmarshal spec file
 	var data spec
 	if err := json.Unmarshal(sp, &data); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, fmt.Errorf("unmarshal steplib json %s: %s", string(sp), err)
 	}
 
 	// process steps
@@ -110,8 +101,7 @@ func (l bitriseSteplibLoader) Load() []repo {
 		// get latest version for step
 		url, ok := stp.Versions[stp.LatestVersionNumber]["source_code_url"].(string)
 		if !ok {
-			fmt.Println("could not convert json data")
-			os.Exit(1)
+			return nil, fmt.Errorf("get source code url: %s", err)
 		}
 
 		orgs := []string{
@@ -139,10 +129,10 @@ func (l bitriseSteplibLoader) Load() []repo {
 
 	}
 
-	return baseRepos
+	return baseRepos, nil
 }
 
-func (l cherryPickLoader) Load() []repo {
+func (l cherryPickLoader) Load() ([]repo, error) {
 	repos := make([]repo, 0)
 	for _, repoURL := range flag.Args() {
 		if _, err := url.Parse(repoURL); err != nil {
@@ -158,5 +148,5 @@ func (l cherryPickLoader) Load() []repo {
 		})
 	}
 
-	return repos
+	return repos, nil
 }
