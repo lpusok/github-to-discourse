@@ -13,6 +13,11 @@ import (
 	"github.com/google/go-github/github"
 )
 
+type repo struct {
+	Owner string
+	Name  string
+}
+
 type repoLoader interface {
 	Load() []repo
 }

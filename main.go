@@ -37,11 +37,6 @@ var (
 	runID string
 )
 
-type repo struct {
-	Owner string
-	Name  string
-}
-
 type step struct {
 	LatestVersionNumber string `json:"latest_version_number"`
 	Versions            map[string]map[string]interface{}
