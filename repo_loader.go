@@ -136,3 +136,16 @@ func (l cherryPickLoader) Load() ([]repo, error) {
 
 	return repos, nil
 }
+
+func getRepoLoader(loader string) (repoLoader, error) {
+	switch loader {
+	case "owner":
+		return githubOwnerLoader{client: client}, nil
+	case "steplib":
+		return bitriseSteplibLoader{}, nil
+	case "cherry":
+		return cherryPickLoader{}, nil
+	default:
+		return nil, fmt.Errorf("unkown loader %s", loader)
+	}
+}
