@@ -16,13 +16,9 @@ const (
 	buildIssuesCat = 11
 	chkptLog       = "chkpt.log"
 	discourseDone  = 1
-	discourseLog   = "      Migrated to Discourse: %s"
 	commentDone    = 2
-	commentLog     = "      Commented on issue"
 	closeDone      = 3
-	closeLog       = "      Closed GitHub issue"
 	lockDone       = 4
-	lockLog        = "      Locked GitHub issue"
 	maxCount       = 1
 	activeTpl      = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). From now on, you can track this issue at: %s"
 	staleTpl       = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). Because this issue has been inactive for more than three months, we will be closing it. If you feel it is still relevant, please open a ticket on Discourse!"
