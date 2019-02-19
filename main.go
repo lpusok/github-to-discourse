@@ -79,16 +79,7 @@ func main() {
 	fmt.Println()
 	fmt.Println()
 
-	if _, err := os.Stat(chkptLog); os.IsNotExist(err) {
-		chkptf, err := os.Create(chkptLog)
-		if err != nil {
-			fmt.Println("error: create checkpoint file: %s")
-			os.Exit(1)
-		}
-		defer chkptf.Close()
-	}
-
-	chkptf, err := os.OpenFile(chkptLog, os.O_WRONLY|os.O_CREATE, 0644)
+	chkptf, err := os.OpenFile(chkptLog, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
