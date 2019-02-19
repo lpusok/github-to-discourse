@@ -12,6 +12,10 @@ import (
 
 var runID  string
 
+type runMode interface{
+	run(issues []*github.Issue, unfinished *github.Issue) (runStats, error)
+}
+
 type dryRun struct {
 	stats runStats
 }
@@ -26,7 +30,7 @@ func init() {
 	flag.StringVar(&runID, "run-id", "", "--run-id=<string> (created resources will have 'myrunid' baked into title for easier identification)")
 }
 
-func (run *dryRun) process(i *github.Issue) {
+func (run dryRun) process(i *github.Issue) {
 	if i.IsPullRequest() {
 		run.stats.PullRequest++
 		fmt.Println(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
@@ -47,7 +51,7 @@ func (run dryRun) finish(i *github.Issue) {
 	fmt.Println(fmt.Printf("continuing %s", i.GetHTMLURL()))
 }
 
-func (run *dryRun) run(issues []*github.Issue, unfinished *github.Issue) (runStats, error) {
+func (run dryRun) run(issues []*github.Issue, unfinished *github.Issue) (runStats, error) {
 	for _, i := range issues {
 		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
 		run.process(i)
@@ -58,7 +62,7 @@ func (run *dryRun) run(issues []*github.Issue, unfinished *github.Issue) (runSta
 	return run.stats, nil
 }
 
-func (run *liveRun) process(i *github.Issue) error {
+func (run liveRun) process(i *github.Issue) error {
 	if i.IsPullRequest() {
 		run.stats.PullRequest++
 		fmt.Println(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
@@ -137,12 +141,12 @@ func (run *liveRun) process(i *github.Issue) error {
 	return nil
 }
 
-func (run *liveRun) finish(i *github.Issue) error {
+func (run liveRun) finish(i *github.Issue) error {
 	// todo: check if status has changed, e.g.: already closed
 	return nil
 }
 
-func (run *liveRun) run(issues []*github.Issue, unfinished *github.Issue) (runStats, error) {
+func (run liveRun) run(issues []*github.Issue, unfinished *github.Issue) (runStats, error) {
 
 	if unfinished != nil {
 		run.finish(unfinished)
@@ -157,4 +161,18 @@ func (run *liveRun) run(issues []*github.Issue, unfinished *github.Issue) (runSt
 		time.Sleep(time.Millisecond + 1000)
 	}
 	return run.stats, nil
+}
+
+func getRunMode(mode string) (runMode, error) {
+	switch mode {
+	case "dry":
+		return dryRun{}, nil
+	case "live":
+		return liveRun{
+				tc:     tc,
+				chkptf: chkptf,
+			}, nil
+	default:
+		return nil, fmt.Errorf("unkown run mode %s")
+	}
 }

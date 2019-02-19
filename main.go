@@ -95,19 +95,16 @@ func main() {
 	}
 	issues := githubOpenLoader{}.Load(baseRepos)
 
-	var stats runStats
-	switch mode {
-	case "dry":
-		fmt.Println("running in 'dry' mode")
-		run := dryRun{}
-		stats, _ = run.run(issues, tbc)
-	case "live":
-		fmt.Println("running in 'live' mode")
-		run := liveRun{
-			tc:     tc,
-			chkptf: chkptf,
-		}
-		stats, err = run.run(issues, tbc)
+	runMode, err := getRunMode(mode)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("error selecting run mode: %s", err))
+		os.Exit(1)
+	}
+	
+	stats, err := runMode.run(issues, tbc)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("error running in % mode: %s", mode, err))
+		os.Exit(1)
 	}
 
 	fmt.Println("==================================")
