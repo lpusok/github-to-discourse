@@ -98,14 +98,14 @@ func main() {
 		defer chkptf.Close()
 	}
 
-	fchkpt, err := os.OpenFile(chkptLog, os.O_WRONLY|os.O_CREATE, 0644)
+	chkptf, err := os.OpenFile(chkptLog, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	defer func() {
-		if err := fchkpt.Close(); err != nil {
+		if err := chkptf.Close(); err != nil {
 			fmt.Printf("warning: %s", err)
 			fmt.Println()
 		}
@@ -128,7 +128,7 @@ func main() {
 		fmt.Println("running in 'live' mode")
 		run := liveRun{
 			tc:     tc,
-			chkptf: fchkpt,
+			chkptf: chkptf,
 		}
 		stats, err = run.run(issues, tbc)
 	}
