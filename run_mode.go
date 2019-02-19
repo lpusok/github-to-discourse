@@ -72,7 +72,7 @@ func (run *liveRun) process(i *github.Issue) error {
 	}
 
 	var commentTpl string
-	commentTplParams := []string{i.GetUser().GetLogin()}
+	commentTplParams := []interface{}{i.GetUser().GetLogin()}
 	if !isStale(i) {
 
 		fmt.Println(fmt.Sprintf("%s is active", i.GetHTMLURL()))
@@ -104,7 +104,7 @@ func (run *liveRun) process(i *github.Issue) error {
 		commentTpl = staleTpl
 	}
 
-	if err := comment(i, fmt.Sprintf(commentTpl, commentTplParams)); err != nil {
+	if err := comment(i, fmt.Sprintf(commentTpl, commentTplParams...)); err != nil {
 		return err
 	}
 
