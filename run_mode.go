@@ -10,7 +10,26 @@ import (
 	"github.com/google/go-github/github"
 )
 
+const (
+	discourseDone  = iota
+	commentDone
+	closeDone
+	lockDone
+)
+
+const (
+	activeTpl      = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). From now on, you can track this issue at: %s"
+	staleTpl       = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). Because this issue has been inactive for more than three months, we will be closing it. If you feel it is still relevant, please open a ticket on Discourse!"
+)
+
 var runID  string
+
+type runStats struct {
+	Processed   int
+	Stale       int
+	Active      int
+	PullRequest int
+}
 
 type runMode interface{
 	run(issues []*github.Issue, unfinished *github.Issue) (runStats, error)
@@ -102,8 +121,6 @@ func (run liveRun) process(i *github.Issue) error {
 	} else {
 
 		run.stats.Stale++
-		printIssueLog("Issue is stale")
-		fmt.Println()
 
 		commentTpl = staleTpl
 	}

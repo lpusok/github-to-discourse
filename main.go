@@ -11,17 +11,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const (
-	staffCategory  = 29
-	buildIssuesCat = 11
+const	(
 	chkptLog       = "chkpt.log"
-	discourseDone  = 1
-	commentDone    = 2
-	closeDone      = 3
-	lockDone       = 4
-	maxCount       = 1
-	activeTpl      = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). From now on, you can track this issue at: %s"
-	staleTpl       = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). Because this issue has been inactive for more than three months, we will be closing it. If you feel it is still relevant, please open a ticket on Discourse!"
 	defaultMode    = "dry"
 )
 
@@ -33,13 +24,6 @@ var (
 	loader string
 	chkpt string
 )
-
-type runStats struct {
-	Processed   int
-	Stale       int
-	Active      int
-	PullRequest int
-}
 
 func init() {
 	ctx = context.Background()

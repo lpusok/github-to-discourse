@@ -13,6 +13,11 @@ import (
 	"github.com/google/go-github/github"
 )
 
+const (
+	staffCategory  = 29
+	buildIssuesCat = 11
+)
+
 var (
 	discourseAPIKey     = os.Getenv("DISCOURSE_API_KEY")
 	discourseAPIUser    = os.Getenv("DISCOURSE_API_USER")
