@@ -71,19 +71,6 @@ func main() {
 
 	baseRepos, err := ldr.Load()
 
-	chkptf, err := os.OpenFile(chkptLog, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	defer func() {
-		if err := chkptf.Close(); err != nil {
-			fmt.Printf("warning: closing checkpoint file: %s", err)
-			fmt.Println()
-		}
-	}()
-
 	tbc, err := continueStartedLoader{}.Load()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))

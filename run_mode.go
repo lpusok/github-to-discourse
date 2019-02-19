@@ -152,6 +152,21 @@ func (run liveRun) run(issues []*github.Issue, unfinished *github.Issue) (runSta
 		run.finish(unfinished)
 	}
 
+	chkptf, err := os.OpenFile(chkptLog, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	run.chkptf = chkptf
+
+	defer func() {
+		if err := chkptf.Close(); err != nil {
+			fmt.Printf("warning: closing checkpoint file: %s", err)
+			fmt.Println()
+		}
+	}()
+
 	for _, i := range issues {
 		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
 		if err := run.process(i); err != nil {
@@ -170,7 +185,6 @@ func getRunMode(mode string) (runMode, error) {
 	case "live":
 		return liveRun{
 				tc:     tc,
-				chkptf: chkptf,
 			}, nil
 	default:
 		return nil, fmt.Errorf("unkown run mode %s")
