@@ -59,7 +59,7 @@ func main() {
 	flag.Parse()
 
 	if loader == "" && chkpt == "" {
-		fmt.Println("must provide repo source or checkpoint file")
+		fmt.Println("error: must provide repo source or checkpoint file")
 		os.Exit(1)
 	}
 
@@ -71,10 +71,6 @@ func main() {
 
 	baseRepos, err := ldr.Load()
 
-	fmt.Printf("found %d repos, querying open issues", len(baseRepos))
-	fmt.Println()
-	fmt.Println()
-
 	chkptf, err := os.OpenFile(chkptLog, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Println(err)
@@ -83,7 +79,7 @@ func main() {
 
 	defer func() {
 		if err := chkptf.Close(); err != nil {
-			fmt.Printf("warning: %s", err)
+			fmt.Printf("warning: closing checkpoint file: %s", err)
 			fmt.Println()
 		}
 	}()
@@ -107,10 +103,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("==================================")
-	fmt.Println("=== Finished processing issues ===")
-	fmt.Println("==================================")
-	fmt.Println()
-	fmt.Println("stale: ", stats.Stale, "active: ", stats.Active, "total processed", stats.Processed)
-	fmt.Println("PRs: ", stats.PullRequest)
+	fmt.Println("finished processing issues!")
+	fmt.Println("run stats:")
+	fmt.Println(fmt.Sprintf("open/pr/stale/migrated: %d/%d/%d/%d ", stats.Processed, stats.PullRequest, stats.Stale, stats.Active))
 }
