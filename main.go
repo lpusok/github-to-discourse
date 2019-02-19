@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
