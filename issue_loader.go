@@ -8,11 +8,11 @@ import (
 	"github.com/google/go-github/github"
 )
 
-type githubOpenLoader struct{}
+type openGithubIssueLoader struct{}
 
 type unfinishedIssueLoader struct{}
 
-func (il githubOpenLoader) Load(baseRepos []repo) []*github.Issue {
+func (il openGithubIssueLoader) Load(baseRepos []repo) []*github.Issue {
 	var all []*github.Issue
 	// get issues for repositories
 	opts := github.IssueListByRepoOptions{

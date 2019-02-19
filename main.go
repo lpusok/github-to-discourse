@@ -60,7 +60,7 @@ func main() {
 		fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
 		os.Exit(1)
 	}
-	issues := githubOpenLoader{}.Load(baseRepos)
+	issues := openGithubIssueLoader{}.Load(baseRepos)
 
 	runMode, err := getRunMode(mode)
 	if err != nil {
