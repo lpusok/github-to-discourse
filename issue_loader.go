@@ -10,7 +10,7 @@ import (
 
 type githubOpenLoader struct{}
 
-type continueStartedLoader struct{}
+type unfinishedIssueLoader struct{}
 
 func (il githubOpenLoader) Load(baseRepos []repo) []*github.Issue {
 	var all []*github.Issue
@@ -33,7 +33,7 @@ func (il githubOpenLoader) Load(baseRepos []repo) []*github.Issue {
 	return all
 }
 
-func (il continueStartedLoader) Load() (*github.Issue, error) {
+func (il unfinishedIssueLoader) Load() (*github.Issue, error) {
 	content, err := ioutil.ReadFile(chkptLog)
 	if err != nil {
 		return nil, fmt.Errorf("read checkpoint file: %s", err)

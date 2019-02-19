@@ -55,7 +55,7 @@ func main() {
 
 	baseRepos, err := ldr.Load()
 
-	tbc, err := continueStartedLoader{}.Load()
+	unfinished, err := unfinishedIssueLoader{}.Load()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
 		os.Exit(1)
@@ -68,7 +68,7 @@ func main() {
 		os.Exit(1)
 	}
 	
-	stats, err := runMode.run(issues, tbc)
+	stats, err := runMode.run(issues, unfinished)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("error running in % mode: %s", mode, err))
 		os.Exit(1)
