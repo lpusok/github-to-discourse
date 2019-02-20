@@ -11,18 +11,18 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const	(
-	chkptLog       = "chkpt.log"
-	defaultMode    = "dry"
+const (
+	chkptLog    = "chkpt.log"
+	defaultMode = "dry"
 )
 
 var (
 	client *github.Client
 	ctx    context.Context
 	tc     *http.Client // todo: check if this can be eliminated
-	mode string
+	mode   string
 	loader string
-	chkpt string
+	chkpt  string
 )
 
 func init() {
@@ -67,7 +67,7 @@ func main() {
 		fmt.Println(fmt.Sprintf("error selecting run mode: %s", err))
 		os.Exit(1)
 	}
-	
+
 	stats, err := runMode.run(issues, unfinished)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("error running in % mode: %s", mode, err))

@@ -9,13 +9,13 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/google/go-github/github"
 	stepmanModels "github.com/bitrise-io/stepman/models"
+	"github.com/google/go-github/github"
 )
 
 var (
 	steplibFilter string
-	orgs []string
+	orgs          []string
 )
 
 type repo struct {

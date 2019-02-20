@@ -11,18 +11,18 @@ import (
 )
 
 const (
-	discourseDone  = iota
+	discourseDone = iota
 	commentDone
 	closeDone
 	lockDone
 )
 
 const (
-	activeTpl      = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). From now on, you can track this issue at: %s"
-	staleTpl       = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). Because this issue has been inactive for more than three months, we will be closing it. If you feel it is still relevant, please open a ticket on Discourse!"
+	activeTpl = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). From now on, you can track this issue at: %s"
+	staleTpl  = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). Because this issue has been inactive for more than three months, we will be closing it. If you feel it is still relevant, please open a ticket on Discourse!"
 )
 
-var runID  string
+var runID string
 
 type runStats struct {
 	Processed   int
@@ -31,7 +31,7 @@ type runStats struct {
 	PullRequest int
 }
 
-type runMode interface{
+type runMode interface {
 	run(issues []*github.Issue, unfinished *github.Issue) (runStats, error)
 }
 
@@ -201,8 +201,8 @@ func getRunMode(mode string) (runMode, error) {
 		return dryRun{}, nil
 	case "live":
 		return liveRun{
-				tc:     tc,
-			}, nil
+			tc: tc,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unkown run mode %s")
 	}
