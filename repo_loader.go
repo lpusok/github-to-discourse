@@ -13,6 +13,11 @@ import (
 	stepmanModels "github.com/bitrise-io/stepman/models"
 )
 
+var (
+	steplibFilter string
+	orgs []string
+)
+
 type repo struct {
 	Owner string
 	Name  string
@@ -38,6 +43,11 @@ type githubOwnerLoader struct {
 type bitriseSteplibLoader struct{}
 
 type cherryPickLoader struct{}
+
+func init() {
+	flag.StringVar(&steplibFilter, "steplib-filter", "bitrise-steplib,bitrise-io,bitrise-community", "--steplib-filter=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
+	orgs = strings.Split(steplibFilter, ",")
+}
 
 func (l githubOwnerLoader) Load() ([]repo, error) {
 	var baseRepos []repo
@@ -87,16 +97,6 @@ func (l bitriseSteplibLoader) Load() ([]repo, error) {
 
 		// get latest version for step
 		url := stp.Versions[stp.LatestVersionNumber].Source.Git
-
-		orgs := []string{
-			"bitrise-steplib",
-			"bitrise-io",
-			// "bitrise-core",
-			"bitrise-community",
-			// "bitrise-tools",
-			// "bitrise-docker",
-			// "bitrise-samples",
-		}
 
 		// filter to our repositories
 		for _, o := range orgs {
