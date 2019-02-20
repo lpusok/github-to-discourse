@@ -91,11 +91,11 @@ func (l bitriseSteplibLoader) Load() ([]repo, error) {
 		orgs := []string{
 			"bitrise-steplib",
 			"bitrise-io",
-			"bitrise-core",
+			// "bitrise-core",
 			"bitrise-community",
-			"bitrise-tools",
-			"bitrise-docker",
-			"bitrise-samples",
+			// "bitrise-tools",
+			// "bitrise-docker",
+			// "bitrise-samples",
 		}
 
 		// filter to our repositories
