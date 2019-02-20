@@ -2,6 +2,36 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:4e1c0cc22c53c5ebda9bd380afd5b56a2f1fc9e6fd2eed59ab8ba0c1522eee19"
+  name = "github.com/bitrise-io/envman"
+  packages = ["models"]
+  pruneopts = "UT"
+  revision = "4a7ab5aae4a3db9a60dcc02ff472de7e47c82d71"
+
+[[projects]]
+  branch = "master"
+  digest = "1:dda280e2e8c54f3c04773cfdae014b8af1606ff6785d0c72485140d21e475056"
+  name = "github.com/bitrise-io/go-utils"
+  packages = [
+    "colorstring",
+    "fileutil",
+    "parseutil",
+    "pathutil",
+    "pointers",
+  ]
+  pruneopts = "UT"
+  revision = "2a09aab8380d7842750328aebd5671bcccea89c8"
+
+[[projects]]
+  digest = "1:34e5041861da39ff37f982c3cdfd46c0b0b46836d136151e895be7bf8fb50d86"
+  name = "github.com/bitrise-io/stepman"
+  packages = ["models"]
+  pruneopts = "UT"
+  revision = "9a9514dd0aa576d51fffbd997d9b37d1660f4dd7"
+  version = "0.11.1"
+
+[[projects]]
   digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -63,21 +93,13 @@
   revision = "4a4468ece617fc8205e99368fa2200e9d1fad421"
   version = "v1.3.0"
 
-[[projects]]
-  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
-  version = "v2.2.2"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/bitrise-io/stepman/models",
     "github.com/google/go-github/github",
     "golang.org/x/oauth2",
-    "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
+	stepmanModels "github.com/bitrise-io/stepman/models"
 )
 
 type repo struct {
@@ -76,7 +77,7 @@ func (l bitriseSteplibLoader) Load() ([]repo, error) {
 	}
 
 	// unmarshal spec file
-	var data spec
+	var data stepmanModels.StepCollectionModel
 	if err := json.Unmarshal(sp, &data); err != nil {
 		return nil, fmt.Errorf("unmarshal steplib json %s: %s", string(sp), err)
 	}
@@ -85,10 +86,7 @@ func (l bitriseSteplibLoader) Load() ([]repo, error) {
 	for _, stp := range data.Steps {
 
 		// get latest version for step
-		url, ok := stp.Versions[stp.LatestVersionNumber]["source_code_url"].(string)
-		if !ok {
-			return nil, fmt.Errorf("get source code url: %s", err)
-		}
+		url := stp.Versions[stp.LatestVersionNumber].Source.Git
 
 		orgs := []string{
 			"bitrise-steplib",
