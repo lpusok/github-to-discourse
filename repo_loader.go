@@ -102,7 +102,7 @@ func (l bitriseSteplibLoader) Load() ([]repo, error) {
 		for _, o := range orgs {
 
 			fragments := strings.Split(url, "/")
-			name := fragments[len(fragments)-1]
+			name := strings.TrimSuffix(fragments[len(fragments)-1], ".git")
 			owner := fragments[len(fragments)-2]
 			if owner == o {
 				repo := repo{owner, name}
