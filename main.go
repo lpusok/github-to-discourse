@@ -70,7 +70,7 @@ func main() {
 
 	stats, err := runMode.run(issues, unfinished)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("error running in % mode: %s", mode, err))
+		fmt.Println(fmt.Sprintf("error running in %s mode: %s", mode, err))
 		os.Exit(1)
 	}
 

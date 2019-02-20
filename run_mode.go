@@ -204,6 +204,6 @@ func getRunMode(mode string) (runMode, error) {
 			tc: tc,
 		}, nil
 	default:
-		return nil, fmt.Errorf("unkown run mode %s")
+		return nil, fmt.Errorf("unkown run mode %s", mode)
 	}
 }
