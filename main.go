@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/google/go-github/github"
+	"github.com/bitrise-io/go-utils/log"
 	"golang.org/x/oauth2"
 )
 
@@ -43,45 +44,51 @@ func main() {
 	flag.Parse()
 
 	if loader == "" && chkpt == "" {
-		fmt.Println("error: must provide repo source or checkpoint file")
+		log.Errorf("error: must provide repo source or checkpoint file")
 		os.Exit(1)
 	}
 
 	ldr, err := getRepoLoader(loader)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("error loading repos using %s loader: %s", loader, err))
+		log.Errorf(fmt.Sprintf("error loading repos using %s loader: %s", loader, err))
 		os.Exit(1)
 	}
 
 	baseRepos, err := ldr.Load()
 
 	if _, err := os.Stat(chkptLog); os.IsNotExist(err) {
+		log.Infof("no checkpoint file -- creating now")
 		if _, err := os.Create(chkptLog); err != nil {
-			fmt.Println("error creating checkpoint file: %s", err)
+			log.Errorf("error creating checkpoint file: %s", err)
 			os.Exit(1)
 		}
 	}
 
+	log.Debugf("load unfinished issue from checkpoint file")
 	unfinished, err := unfinishedIssueLoader{}.Load()
 	if err != nil {
-		fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
+		log.Errorf(fmt.Sprintf("error restoring unfinished issue: %s", err))
 		os.Exit(1)
 	}
+
+	log.Debugf("load open github issues")
 	issues := openGithubIssueLoader{}.Load(baseRepos)
 
+	log.Debugf("select run mode")
 	runMode, err := getRunMode(mode)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("error selecting run mode: %s", err))
+		log.Errorf(fmt.Sprintf("error selecting run mode: %s", err))
 		os.Exit(1)
 	}
 
+	log.Infof("start processing")
 	stats, err := runMode.run(issues, unfinished)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("error running in %s mode: %s", mode, err))
+		log.Errorf(fmt.Sprintf("error running in %s mode: %s", mode, err))
 		os.Exit(1)
 	}
 
-	fmt.Println("finished processing issues!")
-	fmt.Println("run stats:")
-	fmt.Println(fmt.Sprintf("open/pr/stale/migrated: %d/%d/%d/%d ", stats.Processed, stats.PullRequest, stats.Stale, stats.Active))
+	log.Successf("finished processing issues!")
+	log.Printf("run stats:")
+	log.Printf("open/pr/stale/migrated: %d/%d/%d/%d ", stats.Processed, stats.PullRequest, stats.Stale, stats.Active)
 }

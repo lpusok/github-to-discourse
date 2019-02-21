@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/google/go-github/github"
+	"github.com/bitrise-io/go-utils/log"
 )
 
 type openGithubIssueLoader struct{}
@@ -39,7 +40,7 @@ func (il unfinishedIssueLoader) Load() (*github.Issue, error) {
 		return nil, fmt.Errorf("read checkpoint file: %s", err)
 	}
 	if len(content) == 0 {
-		fmt.Println("checkpoint file empty")
+		log.Warnf("checkpoint file empty")
 		return nil, nil
 	}
 

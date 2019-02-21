@@ -11,11 +11,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:dda280e2e8c54f3c04773cfdae014b8af1606ff6785d0c72485140d21e475056"
+  digest = "1:3dfb5a9aa25d092f2199416f5ae23e6baf0ea40b14b2682a4c7d6c8ea518f1c9"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
     "fileutil",
+    "log",
     "parseutil",
     "pathutil",
     "pointers",
@@ -97,6 +98,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/bitrise-io/go-utils/log",
     "github.com/bitrise-io/stepman/models",
     "github.com/google/go-github/github",
     "golang.org/x/oauth2",

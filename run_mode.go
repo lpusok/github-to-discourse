@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
+	"github.com/bitrise-io/go-utils/log"
 )
 
 const (
@@ -72,7 +73,7 @@ func (run dryRun) finish(i *github.Issue) {
 
 func (run dryRun) run(issues []*github.Issue, unfinished *github.Issue) (runStats, error) {
 	for _, i := range issues {
-		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
+		log.Printf("processing issue %s", i.GetHTMLURL())
 		run.process(i)
 		// avoid throttling
 		time.Sleep(time.Millisecond + 1000)
@@ -84,7 +85,7 @@ func (run dryRun) run(issues []*github.Issue, unfinished *github.Issue) (runStat
 func (run liveRun) process(i *github.Issue) error {
 	if i.IsPullRequest() {
 		run.stats.PullRequest++
-		fmt.Println(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
+		log.Printf(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
 		return nil
 	}
 
@@ -98,7 +99,7 @@ func (run liveRun) process(i *github.Issue) error {
 	commentTplParams := []interface{}{i.GetUser().GetLogin()}
 	if !isStale(i) {
 
-		fmt.Println(fmt.Sprintf("%s is active", i.GetHTMLURL()))
+		log.Debugf(fmt.Sprintf("%s is active", i.GetHTMLURL()))
 		run.stats.Active++
 
 		// discourse
