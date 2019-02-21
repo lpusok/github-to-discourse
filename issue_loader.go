@@ -50,7 +50,7 @@ func (il unfinishedIssueLoader) Load() (*github.Issue, error) {
 
 	issue, resp, err := client.Issues.Get(ctx, restored.Owner, restored.Repo, restored.IssNum)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("fetch %s from github: %s", restored.Repo, err))
+		return nil, fmt.Errorf("fetch %s from github: %s", restored.Repo, err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("fetch %s from github: %s", restored.Repo, resp.Status)
