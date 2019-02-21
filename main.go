@@ -55,6 +55,13 @@ func main() {
 
 	baseRepos, err := ldr.Load()
 
+	if _, err := os.Stat(chkptLog); os.IsNotExist(err) {
+		if _, err := os.Create(chkptLog); err != nil {
+			fmt.Println("error creating checkpoint file: %s", err)
+			os.Exit(1)
+		}
+	}
+
 	unfinished, err := unfinishedIssueLoader{}.Load()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("error restoring unfinished issue: %s", err))
