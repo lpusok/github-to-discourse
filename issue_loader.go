@@ -36,19 +36,19 @@ func (il openGithubIssueLoader) Load(baseRepos []repo) []*github.Issue {
 	return all
 }
 
-func (il unfinishedIssueLoader) Load() (*github.Issue, error) {
+func (il unfinishedIssueLoader) Load() (*github.Issue, int, error) {
 	content, err := ioutil.ReadFile(chkptLog)
 	if err != nil {
-		return nil, fmt.Errorf("read checkpoint file: %s", err)
+		return nil, 0, fmt.Errorf("read checkpoint file: %s", err)
 	}
 	if len(content) == 0 {
 		log.Warnf("checkpoint file empty")
-		return nil, nil
+		return nil, 0, nil
 	}
 
 	var restored restoredIssue
 	if err := json.Unmarshal([]byte(content), &restored); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	fragments := strings.Split(restored.URL, "/")
@@ -56,16 +56,16 @@ func (il unfinishedIssueLoader) Load() (*github.Issue, error) {
 	repo := fragments[len(fragments)-3]
 	issNum, err := strconv.Atoi(fragments[len(fragments)-1])
 	if err != nil {
-		return nil, fmt.Errorf("parse issue details from url %s: %s", restored.URL, err)
+		return nil, 0, fmt.Errorf("parse issue details from url %s: %s", restored.URL, err)
 	}
 
 	issue, resp, err := client.Issues.Get(ctx, owner, repo, issNum)
 	if err != nil {
-		return nil, fmt.Errorf("fetch %s from github: %s", restored.URL, err)
+		return nil, 0, fmt.Errorf("fetch %s from github: %s", restored.URL, err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("fetch %s from github: %s", restored.URL, resp.Status)
+		return nil, 0, fmt.Errorf("fetch %s from github: %s", restored.URL, resp.Status)
 	}
 
-	return issue, nil
+	return issue, restored.Done, nil
 }

@@ -33,7 +33,7 @@ type runStats struct {
 }
 
 type runMode interface {
-	run(issues []*github.Issue, unfinished *github.Issue) (runStats, error)
+	run(issues []*github.Issue, unfinished *github.Issue, unfinishedState int) (runStats, error)
 }
 
 type dryRun struct {
@@ -71,7 +71,7 @@ func (run dryRun) finish(i *github.Issue) {
 	fmt.Println(fmt.Printf("continuing %s", i.GetHTMLURL()))
 }
 
-func (run dryRun) run(issues []*github.Issue, unfinished *github.Issue) (runStats, error) {
+func (run dryRun) run(issues []*github.Issue, unfinished *github.Issue, _ int) (runStats, error) {
 	for _, i := range issues {
 		log.Printf("processing issue %s", i.GetHTMLURL())
 		run.process(i)
@@ -157,31 +157,86 @@ func (run liveRun) process(i *github.Issue) error {
 	return nil
 }
 
-func (run liveRun) finish(i *github.Issue) error {
+// todo: refactor: extract duplicate case logic to functions
+func (run liveRun) finish(i *github.Issue, state int) error {
 	log.Debugf("continuing from checkpoint")
-	// todo: check if status has changed, e.g.: already closed
+	checkpoint := restoredIssue{
+		URL:    i.GetHTMLURL(),
+	}
+	switch state {
+	case discourseDone:
+		var commentTpl string
+		commentTplParams := []interface{}{i.GetUser().GetLogin()}
+		if !isStale(i) {
+
+			log.Debugf(fmt.Sprintf("%s is active", i.GetHTMLURL()))
+
+			url := "<MISSING_DATA>" // todo: retreive discourse url when continuing
+			commentTpl = activeTpl
+			commentTplParams = append(commentTplParams, url)
+		} else {
+			commentTpl = staleTpl
+		}
+
+		if err := comment(i, fmt.Sprintf(commentTpl, commentTplParams...)); err != nil {
+			return err
+		}
+
+		checkpoint.Done = commentDone
+		if err := saveState(run.chkptf, checkpoint); err != nil {
+			return fmt.Errorf("process: %s", err)
+		}
+		fallthrough
+	case commentDone:
+		if err := close(i); err != nil {
+			return err
+		}
+		
+		checkpoint.Done = closeDone
+		if err := saveState(run.chkptf, checkpoint); err != nil {
+			return fmt.Errorf("process: %s", err)
+		}
+		fallthrough
+	case closeDone:
+		if err := lock(i); err != nil {
+			return err
+		}
+		
+		checkpoint.Done = lockDone
+		if err := saveState(run.chkptf, checkpoint); err != nil {
+			return fmt.Errorf("process: %s", err)
+		}
+		fallthrough
+	case lockDone:
+		// todo: clear the checkpoint file?
+	default:
+		return fmt.Errorf("unknown state %d")
+	}
 	return nil
 }
 
-func (run liveRun) run(issues []*github.Issue, unfinished *github.Issue) (runStats, error) {
-
-	if unfinished != nil {
-		run.finish(unfinished)
-	}
+func (run liveRun) run(issues []*github.Issue, unfinished *github.Issue, unfinishedState int) (runStats, error) {
 
 	chkptf, err := os.OpenFile(chkptLog, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return run.stats, fmt.Errorf("open checkpoint file: %s", err)
 	}
-
-	run.chkptf = chkptf
-
 	defer func() {
 		if err := chkptf.Close(); err != nil {
 			fmt.Printf("warning: closing checkpoint file: %s", err)
 			fmt.Println()
 		}
 	}()
+
+	run.chkptf = chkptf
+
+	if unfinished != nil {
+		if err := run.finish(unfinished, unfinishedState); err != nil {
+			return run.stats, fmt.Errorf("finish unfinished issue %s: %s", unfinished.GetHTMLURL(), err)
+		}
+	}
+
+
 
 	for _, i := range issues {
 		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))

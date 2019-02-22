@@ -73,7 +73,7 @@ func main() {
 	}
 
 	log.Debugf("load unfinished issue from checkpoint file")
-	unfinished, err := unfinishedIssueLoader{}.Load()
+	unfinished, state, err := unfinishedIssueLoader{}.Load()
 	if err != nil {
 		log.Errorf(fmt.Sprintf("error restoring unfinished issue: %s", err))
 		os.Exit(1)
@@ -91,7 +91,7 @@ func main() {
 	}
 
 	log.Infof("start processing")
-	stats, err := runMode.run(issues, unfinished)
+	stats, err := runMode.run(issues, unfinished, state)
 	if err != nil {
 		log.Errorf(fmt.Sprintf("error running in %s mode: %s", mode, err))
 		os.Exit(1)
