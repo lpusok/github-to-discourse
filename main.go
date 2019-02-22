@@ -24,6 +24,7 @@ var (
 	mode   string
 	loader string
 	chkpt  string
+	debug  string
 )
 
 func init() {
@@ -37,6 +38,7 @@ func init() {
 	flag.StringVar(&mode, "run-mode", defaultMode, "--runmode=dry|live (dry: only prints what would happen, but modifies nothing)")
 	flag.StringVar(&loader, "repo-loader", "cherry", "--repo-loader=cherry|owner|steplib (repo loader to use to process arguments)")
 	flag.StringVar(&chkpt, "chkpt", "", "--chkpt=checkpoint.log (continue from state stored in checkpoint file)")
+	flag.StringVar(&debug, "debug", "", "--debug=true (if whatever value is present, debug mode is enabled)")
 }
 
 func main() {
@@ -48,6 +50,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if debug != "" {
+		log.SetEnableDebugLog(true)
+	}
+
 	ldr, err := getRepoLoader(loader)
 	if err != nil {
 		log.Errorf(fmt.Sprintf("error loading repos using %s loader: %s", loader, err))
@@ -55,6 +61,8 @@ func main() {
 	}
 
 	baseRepos, err := ldr.Load()
+
+	log.Debugf("base repos loaded: %s", baseRepos)
 
 	if _, err := os.Stat(chkptLog); os.IsNotExist(err) {
 		log.Infof("no checkpoint file -- creating now")
@@ -71,8 +79,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Debugf("load open github issues")
 	issues := openGithubIssueLoader{}.Load(baseRepos)
+
+	log.Debugf("open github issues: %s", issues)
 
 	log.Debugf("select run mode")
 	runMode, err := getRunMode(mode)

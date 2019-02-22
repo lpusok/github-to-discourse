@@ -164,6 +164,7 @@ func (run liveRun) process(i *github.Issue) error {
 }
 
 func (run liveRun) finish(i *github.Issue) error {
+	log.Debugf("continuing from checkpoint")
 	// todo: check if status has changed, e.g.: already closed
 	return nil
 }
@@ -176,8 +177,7 @@ func (run liveRun) run(issues []*github.Issue, unfinished *github.Issue) (runSta
 
 	chkptf, err := os.OpenFile(chkptLog, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return run.stats, fmt.Errorf("open checkpoint file: %s", err)
 	}
 
 	run.chkptf = chkptf

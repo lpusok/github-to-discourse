@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	stepmanModels "github.com/bitrise-io/stepman/models"
+	"github.com/bitrise-io/go-utils/log"
 	"github.com/google/go-github/github"
 )
 
@@ -138,10 +139,13 @@ func (l cherryPickLoader) Load() ([]repo, error) {
 func getRepoLoader(loader string) (repoLoader, error) {
 	switch loader {
 	case "owner":
+		log.Debugf("owner repo loader selected")
 		return githubOwnerLoader{client: client}, nil
 	case "steplib":
+		log.Debugf("steplib repo loader selected")
 		return bitriseSteplibLoader{}, nil
 	case "cherry":
+		log.Debugf("cherry repo loader selected")
 		return cherryPickLoader{}, nil
 	default:
 		return nil, fmt.Errorf("unkown loader %s", loader)
