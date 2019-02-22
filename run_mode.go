@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -83,15 +84,18 @@ func (run dryRun) run(issues []*github.Issue, unfinished *github.Issue) (runStat
 }
 
 func (run liveRun) process(i *github.Issue) error {
+	issueURL := i.GetHTMLURL()
 	if i.IsPullRequest() {
 		run.stats.PullRequest++
-		log.Printf(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
+		log.Printf(fmt.Sprintf("skip %s: is pull request", issueURL))
 		return nil
 	}
 
+	fragments := strings.Split(issueURL, "/")
 	checkpoint := restoredIssue{
-		Repo:   i.GetHTMLURL(),
-		Owner:  i.GetRepository().GetOwner().GetLogin(),
+		URL:    issueURL,
+		Repo:   fragments[len(fragments)-1],
+		Owner:  fragments[len(fragments)-2],
 		IssNum: i.GetNumber(),
 	}
 
@@ -99,7 +103,7 @@ func (run liveRun) process(i *github.Issue) error {
 	commentTplParams := []interface{}{i.GetUser().GetLogin()}
 	if !isStale(i) {
 
-		log.Debugf(fmt.Sprintf("%s is active", i.GetHTMLURL()))
+		log.Debugf(fmt.Sprintf("%s is active", issueURL))
 		run.stats.Active++
 
 		// discourse
