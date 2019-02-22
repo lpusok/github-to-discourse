@@ -7,11 +7,7 @@ import (
 
 type restoredIssue struct {
 	URL    string
-	Owner  string
-	Repo   string
-	IssNum int
 	Done   int
-	Extra  string
 }
 
 func saveState(f *os.File, chkpt restoredIssue) error {

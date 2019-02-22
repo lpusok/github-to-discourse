@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strconv"
+	"strings"
 
 	"github.com/google/go-github/github"
 	"github.com/bitrise-io/go-utils/log"
@@ -49,12 +51,20 @@ func (il unfinishedIssueLoader) Load() (*github.Issue, error) {
 		return nil, err
 	}
 
-	issue, resp, err := client.Issues.Get(ctx, restored.Owner, restored.Repo, restored.IssNum)
+	fragments := strings.Split(restored.URL, "/")
+	owner := fragments[len(fragments)-4]
+	repo := fragments[len(fragments)-3]
+	issNum, err := strconv.Atoi(fragments[len(fragments)-1])
 	if err != nil {
-		return nil, fmt.Errorf("fetch %s from github: %s", restored.Repo, err)
+		return nil, fmt.Errorf("parse issue details from url %s: %s", restored.URL, err)
+	}
+
+	issue, resp, err := client.Issues.Get(ctx, owner, repo, issNum)
+	if err != nil {
+		return nil, fmt.Errorf("fetch %s from github: %s", restored.URL, err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("fetch %s from github: %s", restored.Repo, resp.Status)
+		return nil, fmt.Errorf("fetch %s from github: %s", restored.URL, resp.Status)
 	}
 
 	return issue, nil
