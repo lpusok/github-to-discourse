@@ -37,10 +37,6 @@ type repoLoader interface {
 	Load() ([]repo, error)
 }
 
-type githubOwnerLoader struct {
-	client *github.Client
-}
-
 type bitriseSteplibLoader struct{}
 
 type cherryPickLoader struct{}
@@ -48,23 +44,6 @@ type cherryPickLoader struct{}
 func init() {
 	flag.StringVar(&steplibFilter, "steplib-filter", "bitrise-steplib,bitrise-io,bitrise-community", "--steplib-filter=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
 	orgs = strings.Split(steplibFilter, ",")
-}
-
-func (l githubOwnerLoader) Load() ([]repo, error) {
-	var baseRepos []repo
-	repos, _, err := l.client.Repositories.List(ctx, "", &github.RepositoryListOptions{
-		Affiliation: "owner",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("fetch repositories owned by authenticated user: %s", err)
-	}
-
-	for _, r := range repos {
-		repo := repo{r.GetOwner().GetLogin(), r.GetName()}
-		baseRepos = append(baseRepos, repo)
-	}
-
-	return baseRepos, nil
 }
 
 func (l bitriseSteplibLoader) Load() ([]repo, error) {
@@ -138,9 +117,6 @@ func (l cherryPickLoader) Load() ([]repo, error) {
 
 func getRepoLoader(loader string) (repoLoader, error) {
 	switch loader {
-	case "owner":
-		log.Debugf("owner repo loader selected")
-		return githubOwnerLoader{client: client}, nil
 	case "steplib":
 		log.Debugf("steplib repo loader selected")
 		return bitriseSteplibLoader{}, nil
