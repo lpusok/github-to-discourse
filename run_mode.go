@@ -239,6 +239,10 @@ func (run liveRun) run(issues []*github.Issue, unfinished *github.Issue, unfinis
 
 
 	for _, i := range issues {
+		if i.GetID() == unfinished.GetID() {
+			log.Debugf("skip %s: issue was processed during finish step")
+			continue
+		}
 		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
 		if err := run.process(i); err != nil {
 			return run.stats, fmt.Errorf("process issue %s: %s", i.GetHTMLURL(), err) // todo: return stats so far or null value object?
