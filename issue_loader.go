@@ -11,11 +11,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 )
 
-type openGithubIssueLoader struct{}
-
-type unfinishedIssueLoader struct{}
-
-func (il openGithubIssueLoader) Load(baseRepos []repo) []*github.Issue {
+func getOpenIssues(baseRepos []repo) []*github.Issue {
 	var all []*github.Issue
 	// get issues for repositories
 	opts := github.IssueListByRepoOptions{
@@ -36,7 +32,7 @@ func (il openGithubIssueLoader) Load(baseRepos []repo) []*github.Issue {
 	return all
 }
 
-func (il unfinishedIssueLoader) Load() (*github.Issue, int, error) {
+func getUnfinished() (*github.Issue, int, error) {
 	content, err := ioutil.ReadFile(chkptLog)
 	if err != nil {
 		return nil, 0, fmt.Errorf("read checkpoint file: %s", err)

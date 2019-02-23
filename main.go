@@ -84,13 +84,13 @@ func main() {
 	}
 
 	log.Debugf("load unfinished issue from checkpoint file")
-	unfinished, state, err := unfinishedIssueLoader{}.Load()
+	unfinished, state, err := getUnfinished()
 	if err != nil {
 		log.Errorf(fmt.Sprintf("error restoring unfinished issue: %s", err))
 		os.Exit(1)
 	}
 
-	issues := openGithubIssueLoader{}.Load(baseRepos)
+	issues := getOpenIssues(baseRepos)
 
 	log.Debugf("open github issues: %s", issues)
 
