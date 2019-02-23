@@ -25,6 +25,8 @@ var (
 	loader string
 	chkpt  string
 	debug  string
+	steplibFilter string
+	orgs          []string
 )
 
 func init() {
@@ -39,6 +41,8 @@ func init() {
 	flag.StringVar(&loader, "repo-loader", "cherry", "--repo-loader=cherry|owner|steplib (repo loader to use to process arguments)")
 	flag.StringVar(&chkpt, "chkpt", "", "--chkpt=checkpoint.log (continue from state stored in checkpoint file)")
 	flag.StringVar(&debug, "debug", "", "--debug=true (if whatever value is present, debug mode is enabled)")
+	flag.StringVar(&steplibFilter, "steplib-filter", "bitrise-steplib,bitrise-io,bitrise-community", "--steplib-filter=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
+	orgs = strings.Split(steplibFilter, ",")
 }
 
 func main() {
@@ -54,6 +58,8 @@ func main() {
 		log.SetEnableDebugLog(true)
 	}
 
+
+
 	var baseRepos []repo
 	var err error
 
@@ -61,7 +67,7 @@ func main() {
 	case "steplib":
 		baseRepos, err = getFromStepLib("https://bitrise-steplib-collection.s3.amazonaws.com/spec.json")
 	case "cherry":
-		baseRepos, err = getFromList(flag.Args())
+		baseRepos, err = getFromList(flag.Args(), steplibFilter)
 	default:
 		log.Errorf("not recognized repo loader %s", loader)
 		os.Exit(1)

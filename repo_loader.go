@@ -14,22 +14,12 @@ import (
 	"github.com/google/go-github/github"
 )
 
-var (
-	steplibFilter string
-	orgs          []string
-)
-
 type repo struct {
 	Owner string
 	Name  string
 }
 
-func init() {
-	flag.StringVar(&steplibFilter, "steplib-filter", "bitrise-steplib,bitrise-io,bitrise-community", "--steplib-filter=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
-	orgs = strings.Split(steplibFilter, ",")
-}
-
-func getFromStepLib() ([]repo, error) {
+func getFromStepLib(steplibURL string, githubOrgs []string) ([]repo, error) {
 	var baseRepos []repo
 	// get spec file
 	resp, err := http.Get(steplibURL)
