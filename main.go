@@ -54,13 +54,18 @@ func main() {
 		log.SetEnableDebugLog(true)
 	}
 
-	ldr, err := getRepoLoader(loader)
-	if err != nil {
-		log.Errorf(fmt.Sprintf("error loading repos using %s loader: %s", loader, err))
+	var baseRepos []repo
+	var err error
+
+	switch loader {
+	case "steplib":
+		baseRepos, err = getFromStepLib("https://bitrise-steplib-collection.s3.amazonaws.com/spec.json")
+	case "cherry":
+		baseRepos, err = getFromList(flag.Args())
+	default:
+		log.Errorf("not recognized repo loader %s", loader)
 		os.Exit(1)
 	}
-
-	baseRepos, err := ldr.Load()
 
 	log.Debugf("base repos loaded: %s", baseRepos)
 

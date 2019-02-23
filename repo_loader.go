@@ -33,23 +33,15 @@ type spec struct {
 	Steps map[string]step
 }
 
-type repoLoader interface {
-	Load() ([]repo, error)
-}
-
-type bitriseSteplibLoader struct{}
-
-type cherryPickLoader struct{}
-
 func init() {
 	flag.StringVar(&steplibFilter, "steplib-filter", "bitrise-steplib,bitrise-io,bitrise-community", "--steplib-filter=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
 	orgs = strings.Split(steplibFilter, ",")
 }
 
-func (l bitriseSteplibLoader) Load() ([]repo, error) {
+func getFromStepLib() ([]repo, error) {
 	var baseRepos []repo
 	// get spec file
-	resp, err := http.Get("https://bitrise-steplib-collection.s3.amazonaws.com/spec.json")
+	resp, err := http.Get(steplibURL)
 	if err != nil {
 		return nil, fmt.Errorf("fetch steplib json: %s", err)
 	}
@@ -96,9 +88,9 @@ func (l bitriseSteplibLoader) Load() ([]repo, error) {
 	return baseRepos, nil
 }
 
-func (l cherryPickLoader) Load() ([]repo, error) {
+func getFromList(urls []string) ([]repo, error) {
 	repos := make([]repo, 0)
-	for _, repoURL := range flag.Args() {
+	for _, repoURL := range urls {
 		if _, err := url.Parse(repoURL); err != nil {
 			// todo: log warning using bitrise log pkg
 			fmt.Println(fmt.Sprintf("repo url %s invalid: %s", repoURL, err))
@@ -113,17 +105,4 @@ func (l cherryPickLoader) Load() ([]repo, error) {
 	}
 
 	return repos, nil
-}
-
-func getRepoLoader(loader string) (repoLoader, error) {
-	switch loader {
-	case "steplib":
-		log.Debugf("steplib repo loader selected")
-		return bitriseSteplibLoader{}, nil
-	case "cherry":
-		log.Debugf("cherry repo loader selected")
-		return cherryPickLoader{}, nil
-	default:
-		return nil, fmt.Errorf("unkown loader %s", loader)
-	}
 }
