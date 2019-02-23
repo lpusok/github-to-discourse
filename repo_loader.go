@@ -24,15 +24,6 @@ type repo struct {
 	Name  string
 }
 
-type step struct {
-	LatestVersionNumber string `json:"latest_version_number"`
-	Versions            map[string]map[string]interface{}
-}
-
-type spec struct {
-	Steps map[string]step
-}
-
 func init() {
 	flag.StringVar(&steplibFilter, "steplib-filter", "bitrise-steplib,bitrise-io,bitrise-community", "--steplib-filter=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
 	orgs = strings.Split(steplibFilter, ",")
