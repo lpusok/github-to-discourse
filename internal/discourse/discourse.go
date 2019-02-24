@@ -38,7 +38,7 @@ func init() {
 	flag.IntVar(&discourseCategoryID, "discourse-category-id", staffCategory, "--discourse-category-id=<int> (discourse category to post topics to)")
 }
 
-func discourse(title string, content string, category int) (string, error) {
+func PostTopic(title string, content string, category int) (string, error) {
 	message := make(map[string]interface{})
 
 	message["title"] = title

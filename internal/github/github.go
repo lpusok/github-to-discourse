@@ -32,7 +32,7 @@ func init() {
 	client = github.NewClient(tc)
 }
 
-func getOpenIssues(repoURLs []string) []*github.Issue {
+func GetOpenIssues(repoURLs []string) []*github.Issue {
 	var all []*github.Issue
 	opts := github.IssueListByRepoOptions{
 		State: "open",
@@ -53,12 +53,12 @@ func getOpenIssues(repoURLs []string) []*github.Issue {
 	return all
 }
 
-func isStale(i *github.Issue) bool {
+func IsStale(i *github.Issue) bool {
 	threeMonthsAgo := time.Now().AddDate(0, -3, 0)
 	return i.GetUpdatedAt().Before(threeMonthsAgo)
 }
 
-func comment(i *github.Issue, comment string) error {
+func PostComment(i *github.Issue, comment string) error {
 	// prepare payload
 	commentPayload := map[string]interface{}{
 		"body": comment,
@@ -99,7 +99,7 @@ func comment(i *github.Issue, comment string) error {
 	return nil
 }
 
-func close(i *github.Issue) error {
+func Close(i *github.Issue) error {
 	payload := map[string]interface{}{
 		"state": "closed",
 	}
@@ -138,7 +138,7 @@ func close(i *github.Issue) error {
 	return nil
 }
 
-func lock(i *github.Issue) error {
+func Lock(i *github.Issue) error {
 	// // lock
 	url := fmt.Sprintf("%s/lock", i.GetURL())
 	request, err := http.NewRequest("PUT", url, bytes.NewBuffer([]byte{}))

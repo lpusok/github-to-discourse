@@ -1,4 +1,4 @@
-package main
+package steplib
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func getFromStepLib(steplibURL string, githubOrgs []string) (repoURLs []string, err error) {
+func LoadRepos(steplibURL string, fromOrgs []string) (repoURLs []string, err error) {
 	// get spec file
 	resp, err := http.Get(steplibURL)
 	if err != nil {
@@ -42,7 +42,7 @@ func getFromStepLib(steplibURL string, githubOrgs []string) (repoURLs []string, 
 	// process steps
 	for _, stp := range data.Steps {
 		// filter to our repositories
-		for _, o := range orgs {
+		for _, o := range fromOrgs {
 			if owner == o {
 				repoURLs = append(urls, stp.Versions[stp.LatestVersionNumber].Source.Git)
 				break

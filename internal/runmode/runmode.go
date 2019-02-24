@@ -9,6 +9,9 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/bitrise-io/go-utils/log"
+
+	"github.com/lszucs/github-to-discourse/internal/github"
+	"github.com/lszucs/github-to-discourse/internal/discourse"
 )
 
 const (
@@ -25,18 +28,11 @@ const (
 
 var runID string
 
-type runStats struct {
-	Processed   int
-	Stale       int
-	Active      int
-	PullRequest int
-}
-
 func init() {
 	flag.StringVar(&runID, "run-id", "", "--run-id=<string> (created resources will have 'myrunid' baked into title for easier identification)")
 }
 
-func dryRun(issues []*github.Issue, stats *runStats) error {
+func DryRun(issues []*github.Issue, stats *runStats) error {
 	for _, i := range issues {
 		log.Printf("processing issue %s", i.GetHTMLURL())
 		if i.IsPullRequest() {
@@ -45,7 +41,7 @@ func dryRun(issues []*github.Issue, stats *runStats) error {
 			continue
 		}
 	
-		if !isStale(i) {
+		if !github.IsStale(i) {
 			stats.Active++
 			fmt.Println(fmt.Sprintf("%s is active", i.GetHTMLURL()))
 		} else {
@@ -59,7 +55,7 @@ func dryRun(issues []*github.Issue, stats *runStats) error {
 	return nil
 }
 
-func liveRun(issues []*github.Issue) (runStats, error) {
+func LiveRun(issues []*github.Issue) (runStats, error) {
 	for _, i := range issues {
 		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
 		if i.IsPullRequest() {
@@ -77,7 +73,7 @@ func liveRun(issues []*github.Issue) (runStats, error) {
 			if runID != "" {
 				title = fmt.Sprintf("[test][%s] %s", runID, i.GetTitle())
 			}
-			url, err := discourse(title, i.GetBody(), discourseCategoryID)
+			url, err := Discourse.PostTopic(title, i.GetBody(), discourseCategoryID)
 			if err != nil {
 				return err
 			}
@@ -88,15 +84,15 @@ func liveRun(issues []*github.Issue) (runStats, error) {
 			commentTpl = staleTpl
 		}
 	
-		if err := comment(i, fmt.Sprintf(commentTpl, commentTplParams...)); err != nil {
+		if err := github.PostComment(i, fmt.Sprintf(commentTpl, commentTplParams...)); err != nil {
 			return err
 		}
 	
-		if err := close(i); err != nil {
+		if err := github.Close(i); err != nil {
 			return err
 		}
 	
-		if err := lock(i); err != nil {
+		if err := github.Lock(i); err != nil {
 			return err
 		}
 	

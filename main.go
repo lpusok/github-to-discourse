@@ -10,6 +10,9 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/bitrise-io/go-utils/log"
 	"golang.org/x/oauth2"
+
+	"github.com/lszucs/github-to-discourse/internal/steplib"
+	"github.com/lszucs/github-to-discourse/internal/runmode"
 )
 
 const (
@@ -43,9 +46,12 @@ func main() {
 	var err error
 	switch repoSrc {
 	case "steplib":
-		repoURLs, err = getFromStepLib(flag.Args(), steplibFilter)
+		fromOrgs := strings.Split(orgs, ",")
+		steplibURL := flag.Args()[0]
+]
+		repoURLs, err = steplib.LoadRepos(steplibURL, fromOrgs)
 	case "cherry":
-		repoURLs, err = flag.Args()
+		repoURLs = flag.Args()[0]
 	default:
 		log.Errorf("not recognized repo loader %s", loader)
 		os.Exit(1)
@@ -55,9 +61,9 @@ func main() {
 	var stats runStats
 	switch mode {
 	case "dry":
-		dryRun(issues)
+		runmode.DryRun(issues)
 	case "live":
-		liveRun(issues)
+		runmode.LiveRun(issues)
 	default:
 		log.Errorf("unkown run mode %s", mode)
 		os.Exit(1)
