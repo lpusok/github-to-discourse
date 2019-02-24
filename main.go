@@ -57,15 +57,18 @@ func main() {
 	if debug != "" {
 		log.SetEnableDebugLog(true)
 	}
-
-
+	
+	if len(flag.Args()) == 0 {
+		log.Errorf("no argument specified")
+		os.Exit(1)
+	}
 
 	var baseRepos []repo
 	var err error
 
 	switch loader {
 	case "steplib":
-		baseRepos, err = getFromStepLib("https://bitrise-steplib-collection.s3.amazonaws.com/spec.json")
+		baseRepos, err = getFromStepLib(flag.Args())
 	case "cherry":
 		baseRepos, err = getFromList(flag.Args(), steplibFilter)
 	default:
