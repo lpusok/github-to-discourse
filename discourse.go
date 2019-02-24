@@ -41,8 +41,6 @@ func init() {
 func discourse(i *github.Issue, title string, content string, category int) (string, error) {
 	message := make(map[string]interface{})
 
-	// prepare payload
-
 	message["title"] = title
 	message["category"] = category
 	message["raw"] = content
@@ -52,9 +50,6 @@ func discourse(i *github.Issue, title string, content string, category int) (str
 		return "", fmt.Errorf("could not marshal %s: %s", message, err)
 	}
 
-	//////////////////////////
-	// post to discourse /////
-	//////////////////////////
 	url := fmt.Sprintf("https://discuss.bitrise.io/posts.json?api_key=%s&api_username=%s", discourseAPIKey, discourseAPIUser)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
@@ -74,7 +69,6 @@ func discourse(i *github.Issue, title string, content string, category int) (str
 		return "", fmt.Errorf("api error for payload %s: %s", payload, body)
 	}
 
-	//  unmarshal response body
 	decoder := json.NewDecoder(strings.NewReader(string(body)))
 	decoder.UseNumber()
 
