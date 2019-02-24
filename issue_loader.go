@@ -31,37 +31,3 @@ func getOpenIssues(baseRepos []repo) []*github.Issue {
 	}
 	return all
 }
-
-func getUnfinished() (*github.Issue, int, error) {
-	content, err := ioutil.ReadFile(chkptLog)
-	if err != nil {
-		return nil, 0, fmt.Errorf("read checkpoint file: %s", err)
-	}
-	if len(content) == 0 {
-		log.Warnf("checkpoint file empty")
-		return nil, 0, nil
-	}
-
-	var restored restoredIssue
-	if err := json.Unmarshal([]byte(content), &restored); err != nil {
-		return nil, 0, err
-	}
-
-	fragments := strings.Split(restored.URL, "/")
-	owner := fragments[len(fragments)-4]
-	repo := fragments[len(fragments)-3]
-	issNum, err := strconv.Atoi(fragments[len(fragments)-1])
-	if err != nil {
-		return nil, 0, fmt.Errorf("parse issue details from url %s: %s", restored.URL, err)
-	}
-
-	issue, resp, err := client.Issues.Get(ctx, owner, repo, issNum)
-	if err != nil {
-		return nil, 0, fmt.Errorf("fetch %s from github: %s", restored.URL, err)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, 0, fmt.Errorf("fetch %s from github: %s", restored.URL, resp.Status)
-	}
-
-	return issue, restored.Done, nil
-}
