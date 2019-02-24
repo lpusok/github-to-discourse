@@ -14,20 +14,7 @@ import (
 	"github.com/google/go-github/github"
 )
 
-type repoURL string
-
-func (url repoURL) owner() {
-	fragments := strings.Split(string(url), "/")
-	return fragments[len(fragments)-2]
-}
-
-func (r repoURL) name() {
-	fragments := strings.Split(string(url), "/")
-	return strings.TrimSuffix(fragments[len(fragments)-1], ".git")
-}
-
-func getFromStepLib(steplibURL string, githubOrgs []string) ([]repoURL, error) {
-	var urls []repoURL
+func getFromStepLib(steplibURL string, githubOrgs []string) (repoURLs []string, err error) {
 	// get spec file
 	resp, err := http.Get(steplibURL)
 	if err != nil {
@@ -57,11 +44,11 @@ func getFromStepLib(steplibURL string, githubOrgs []string) ([]repoURL, error) {
 		// filter to our repositories
 		for _, o := range orgs {
 			if owner == o {
-				urls = append(urls, stp.Versions[stp.LatestVersionNumber].Source.Git)
+				repoURLs = append(urls, stp.Versions[stp.LatestVersionNumber].Source.Git)
 				break
 			}
 		}
 	}
 
-	return urls, nil
+	return repoURLs, nil
 }

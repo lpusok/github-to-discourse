@@ -14,6 +14,7 @@ import (
 
 const (
 	defaultMode = "dry"
+	defaultRepoSrc = "cherry"
 )
 
 var (
@@ -21,9 +22,8 @@ var (
 	ctx    context.Context
 	tc     *http.Client // todo: check if this can be eliminated
 	mode   string
-	loader string
-	steplibFilter string
-	orgs          []string
+	repoSrc string
+	orgs   string
 )
 
 func init() {
@@ -34,30 +34,24 @@ func init() {
 	tc = oauth2.NewClient(ctx, ts)
 	client = github.NewClient(tc)
 
-	flag.StringVar(&mode, "run-mode", defaultMode, "--runmode=dry|live (dry: only prints what would happen, but modifies nothing)")
-	flag.StringVar(&loader, "repo-loader", "cherry", "--repo-loader=cherry|steplib (repo loader to use to process arguments)")
-	flag.StringVar(&steplibFilter, "steplib-filter", "bitrise-steplib,bitrise-io,bitrise-community", "--steplib-filter=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
-	orgs = strings.Split(steplibFilter, ",")
+	flag.StringVar(&mode, "mode", defaultMode, "--mode=dry|live (dry: only prints what would happen, but modifies nothing)")
+	flag.StringVar(&repoSrc, "repo-src", defaultRepoSrc, "--repo-src=cherry|steplib (repo loader to use to process arguments)")
+	flag.StringVar(&orgs, "orgs", "bitrise-steplib,bitrise-io,bitrise-community", "--orgs=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
 }
 
 func main() {
 
 	flag.Parse()
-
-	if loader == "" && chkpt == "" {
-		log.Errorf("error: must provide repo source or checkpoint file")
-		os.Exit(1)
-	}
 	
 	if len(flag.Args()) == 0 {
-		log.Errorf("no argument specified")
+		log.Errorf("no repo source url specified")
 		os.Exit(1)
 	}
 
 	var repoURLs []repoURL
 	var err error
 
-	switch loader {
+	switch repoSrc {
 	case "steplib":
 		repoURLs, err = getFromStepLib(flag.Args(), steplibFilter)
 	case "cherry":

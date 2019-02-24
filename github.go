@@ -9,7 +9,36 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
+	"io/ioutil"
+	"strconv"
+	"strings"
+
+
+	"github.com/bitrise-io/go-utils/log"
 )
+
+func getOpenIssues(repoURLs []repoURLS) []*github.Issue {
+	var all []*github.Issue
+	opts := github.IssueListByRepoOptions{
+		State: "open",
+	}
+	for _, url := range repoURLs {
+		fragments := strings.Split(string(repoURL), "/")
+		owner := fragments[len(fragments)-2]
+		name := strings.TrimSuffix(fragments[len(fragments)-1], ".git")
+		
+		issues, _, err := client.Issues.ListByRepo(ctx, owner, name, &opts)
+		if err != nil {
+			fmt.Printf("fetch issues: %s", err)
+			fmt.Println()
+			continue
+		}
+
+		all = append(all, issues...)
+
+	}
+	return all
+}
 
 func isStale(i *github.Issue) bool {
 	threeMonthsAgo := time.Now().AddDate(0, -3, 0)

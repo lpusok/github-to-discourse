@@ -77,7 +77,7 @@ func liveRun(issues []*github.Issue) (runStats, error) {
 			if runID != "" {
 				title = fmt.Sprintf("[test][%s] %s", runID, i.GetTitle())
 			}
-			url, err := discourse(i, title, i.GetBody(), discourseCategoryID)
+			url, err := discourse(title, i.GetBody(), discourseCategoryID)
 			if err != nil {
 				return err
 			}
