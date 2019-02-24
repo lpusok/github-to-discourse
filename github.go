@@ -17,23 +17,36 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 )
 
-func getOpenIssues(repoURLs []repoURLS) []*github.Issue {
+var (
+	client *github.Client
+	ctx    context.Context
+	tc     *http.Client
+)
+
+func init() {
+	ctx = context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN")},
+	)
+	tc = oauth2.NewClient(ctx, ts)
+	client = github.NewClient(tc)
+}
+
+func getOpenIssues(repoURLs []string) []*github.Issue {
 	var all []*github.Issue
 	opts := github.IssueListByRepoOptions{
 		State: "open",
 	}
 	for _, url := range repoURLs {
-		fragments := strings.Split(string(repoURL), "/")
+		fragments := strings.Split(string(url), "/")
 		owner := fragments[len(fragments)-2]
 		name := strings.TrimSuffix(fragments[len(fragments)-1], ".git")
 		
 		issues, _, err := client.Issues.ListByRepo(ctx, owner, name, &opts)
 		if err != nil {
-			fmt.Printf("fetch issues: %s", err)
-			fmt.Println()
+			log.Warnf("fetch issues from %s: %s", url, err)
 			continue
 		}
-
 		all = append(all, issues...)
 
 	}

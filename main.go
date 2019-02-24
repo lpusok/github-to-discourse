@@ -15,28 +15,19 @@ import (
 const (
 	defaultMode = "dry"
 	defaultRepoSrc = "cherry"
+	defaultOrgs = "bitrise-steplib,bitrise-io,bitrise-community"
 )
 
 var (
-	client *github.Client
-	ctx    context.Context
-	tc     *http.Client
 	mode   string
 	repoSrc string
 	orgs   string
 )
 
 func init() {
-	ctx = context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN")},
-	)
-	tc = oauth2.NewClient(ctx, ts)
-	client = github.NewClient(tc)
-
 	flag.StringVar(&mode, "mode", defaultMode, "--mode=dry|live (dry: only prints what would happen, but modifies nothing)")
 	flag.StringVar(&repoSrc, "repo-src", defaultRepoSrc, "--repo-src=cherry|steplib (repo loader to use to process arguments)")
-	flag.StringVar(&orgs, "orgs", "bitrise-steplib,bitrise-io,bitrise-community", "--orgs=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
+	flag.StringVar(&orgs, "orgs", defaultOrgs, "--orgs=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
 }
 
 func main() {
@@ -48,9 +39,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	var repoURLs []repoURL
+	var repoURLs []string
 	var err error
-
 	switch repoSrc {
 	case "steplib":
 		repoURLs, err = getFromStepLib(flag.Args(), steplibFilter)
@@ -61,17 +51,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Debugf("base repos loaded: %s", repoURLs)
 	issues := getOpenIssues(repoURLs)
-
-	log.Debugf("open github issues: %s", issues)
-
-	log.Infof("start processing")
+	var stats runStats
 	switch mode {
 	case "dry":
-		dryRun()
+		dryRun(issues)
 	case "live":
-		liveRun(tc)
+		liveRun(issues)
 	default:
 		log.Errorf("unkown run mode %s", mode)
 		os.Exit(1)
