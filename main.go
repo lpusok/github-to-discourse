@@ -35,7 +35,7 @@ func init() {
 	client = github.NewClient(tc)
 
 	flag.StringVar(&mode, "run-mode", defaultMode, "--runmode=dry|live (dry: only prints what would happen, but modifies nothing)")
-	flag.StringVar(&loader, "repo-loader", "cherry", "--repo-loader=cherry|owner|steplib (repo loader to use to process arguments)")
+	flag.StringVar(&loader, "repo-loader", "cherry", "--repo-loader=cherry|steplib (repo loader to use to process arguments)")
 	flag.StringVar(&steplibFilter, "steplib-filter", "bitrise-steplib,bitrise-io,bitrise-community", "--steplib-filter=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
 	orgs = strings.Split(steplibFilter, ",")
 }
@@ -54,32 +54,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	var baseRepos []repo
+	var repoURLs []repoURL
 	var err error
 
 	switch loader {
 	case "steplib":
-		baseRepos, err = getFromStepLib(flag.Args(), steplibFilter)
+		repoURLs, err = getFromStepLib(flag.Args(), steplibFilter)
 	case "cherry":
-		baseRepos, err = getFromList(flag.Args())
+		repoURLs, err = flag.Args()
 	default:
 		log.Errorf("not recognized repo loader %s", loader)
 		os.Exit(1)
 	}
 
-	log.Debugf("base repos loaded: %s", baseRepos)
-
-
-	issues := getOpenIssues(baseRepos)
+	log.Debugf("base repos loaded: %s", repoURLs)
+	issues := getOpenIssues(repoURLs)
 
 	log.Debugf("open github issues: %s", issues)
-
-	log.Debugf("select run mode")
-	runMode, err := getRunMode(mode)
-	if err != nil {
-		log.Errorf(fmt.Sprintf("error selecting run mode: %s", err))
-		os.Exit(1)
-	}
 
 	log.Infof("start processing")
 	switch mode {

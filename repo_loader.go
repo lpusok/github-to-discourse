@@ -14,13 +14,20 @@ import (
 	"github.com/google/go-github/github"
 )
 
-type repo struct {
-	Owner string
-	Name  string
+type repoURL string
+
+func (url repoURL) owner() {
+	fragments := strings.Split(string(url), "/")
+	return fragments[len(fragments)-2]
 }
 
-func getFromStepLib(steplibURL string, githubOrgs []string) ([]repo, error) {
-	var baseRepos []repo
+func (r repoURL) name() {
+	fragments := strings.Split(string(url), "/")
+	return strings.TrimSuffix(fragments[len(fragments)-1], ".git")
+}
+
+func getFromStepLib(steplibURL string, githubOrgs []string) ([]repoURL, error) {
+	var urls []repoURL
 	// get spec file
 	resp, err := http.Get(steplibURL)
 	if err != nil {
@@ -47,43 +54,14 @@ func getFromStepLib(steplibURL string, githubOrgs []string) ([]repo, error) {
 
 	// process steps
 	for _, stp := range data.Steps {
-
-		// get latest version for step
-		url := stp.Versions[stp.LatestVersionNumber].Source.Git
-
 		// filter to our repositories
 		for _, o := range orgs {
-
-			fragments := strings.Split(url, "/")
-			name := strings.TrimSuffix(fragments[len(fragments)-1], ".git")
-			owner := fragments[len(fragments)-2]
 			if owner == o {
-				repo := repo{owner, name}
-				baseRepos = append(baseRepos, repo)
+				urls = append(urls, stp.Versions[stp.LatestVersionNumber].Source.Git)
 				break
 			}
 		}
-
 	}
 
-	return baseRepos, nil
-}
-
-func getFromList(urls []string) ([]repo, error) {
-	repos := make([]repo, 0)
-	for _, repoURL := range urls {
-		if _, err := url.Parse(repoURL); err != nil {
-			// todo: log warning using bitrise log pkg
-			fmt.Println(fmt.Sprintf("repo url %s invalid: %s", repoURL, err))
-			continue
-		}
-
-		fragments := strings.Split(repoURL, "/")
-		repos = append(repos, repo{
-			Name:  fragments[len(fragments)-1],
-			Owner: fragments[len(fragments)-2],
-		})
-	}
-
-	return repos, nil
+	return urls, nil
 }
