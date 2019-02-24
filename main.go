@@ -20,7 +20,7 @@ const (
 var (
 	client *github.Client
 	ctx    context.Context
-	tc     *http.Client // todo: check if this can be eliminated
+	tc     *http.Client
 	mode   string
 	repoSrc string
 	orgs   string
