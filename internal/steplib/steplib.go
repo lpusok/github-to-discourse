@@ -2,16 +2,12 @@ package steplib
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"strings"
 
 	stepmanModels "github.com/bitrise-io/stepman/models"
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/google/go-github/github"
 )
 
 func LoadRepos(steplibURL string, fromOrgs []string) (repoURLs []string, err error) {
