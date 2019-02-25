@@ -18,8 +18,7 @@ func LoadRepos(steplibURL string, fromOrgs []string) (repoURLs []string, err err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("warning: %s", err)
-			fmt.Println()
+			log.Warnf("close response body: %s", err)
 		}
 	}()
 
