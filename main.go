@@ -1,16 +1,12 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"fmt"
-	"net/http"
 	"os"
+	"strings"
 
-	"github.com/google/go-github/github"
 	"github.com/bitrise-io/go-utils/log"
-	"golang.org/x/oauth2"
-
+	"github.com/lszucs/github-to-discourse/internal/github"
 	"github.com/lszucs/github-to-discourse/internal/steplib"
 	"github.com/lszucs/github-to-discourse/internal/runmode"
 )
@@ -38,7 +34,7 @@ func main() {
 	flag.Parse()
 	
 	if len(flag.Args()) == 0 {
-		log.Errorf("no repo source url specified")
+		log.Errorf("error: no repo source url specified")
 		os.Exit(1)
 	}
 
@@ -48,24 +44,34 @@ func main() {
 	case "steplib":
 		fromOrgs := strings.Split(orgs, ",")
 		steplibURL := flag.Args()[0]
-]
+		
 		repoURLs, err = steplib.LoadRepos(steplibURL, fromOrgs)
 	case "cherry":
-		repoURLs = flag.Args()[0]
+		repoURLs = strings.Split(flag.Args()[0], ",")
 	default:
-		log.Errorf("not recognized repo loader %s", loader)
+		log.Errorf("error: not recognized repo source %s", repoSrc)
 		os.Exit(1)
 	}
 
-	issues := getOpenIssues(repoURLs)
-	var stats runStats
+	if err != nil {
+		log.Errorf("error: %s", mode)
+		os.Exit(1)
+	}
+	
+	issues := github.GetOpenIssues(repoURLs)
+	var stats runmode.Stats
 	switch mode {
 	case "dry":
-		runmode.DryRun(issues)
+		stats, err = runmode.DryRun(issues)
 	case "live":
-		runmode.LiveRun(issues)
+		stats, err = runmode.LiveRun(issues)
 	default:
-		log.Errorf("unkown run mode %s", mode)
+		log.Errorf("error: unkown run mode %s", mode)
+		os.Exit(1)
+	}
+	
+	if err != nil {
+		log.Errorf("error: %s", mode)
 		os.Exit(1)
 	}
 

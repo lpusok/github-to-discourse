@@ -3,11 +3,11 @@ package runmode
 import (
 	"flag"
 	"fmt"
-	"net/http"
-	"os"
+
+
 	"time"
 
-	"github.com/google/go-github/github"
+	gh "github.com/google/go-github/github"
 	"github.com/bitrise-io/go-utils/log"
 
 	"github.com/lszucs/github-to-discourse/internal/github"
@@ -32,7 +32,8 @@ func init() {
 	flag.StringVar(&runID, "run-id", "", "--run-id=<string> (created resources will have 'myrunid' baked into title for easier identification)")
 }
 
-func DryRun(issues []*github.Issue, stats *runStats) error {
+func DryRun(issues []*gh.Issue) (Stats, error) {
+	var stats Stats
 	for _, i := range issues {
 		log.Printf("processing issue %s", i.GetHTMLURL())
 		if i.IsPullRequest() {
@@ -45,59 +46,60 @@ func DryRun(issues []*github.Issue, stats *runStats) error {
 			stats.Active++
 			fmt.Println(fmt.Sprintf("%s is active", i.GetHTMLURL()))
 		} else {
-			run.stats.Stale++
+			stats.Stale++
 			fmt.Println(fmt.Sprintf("%s is stale", i.GetHTMLURL()))
 		}
 		stats.Processed++
 		time.Sleep(time.Millisecond + 1000)
 	}
 
-	return nil
+	return stats, nil
 }
 
-func LiveRun(issues []*github.Issue) (runStats, error) {
+func LiveRun(issues []*gh.Issue) (Stats, error) {
+	var stats Stats
 	for _, i := range issues {
 		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
 		if i.IsPullRequest() {
-			run.stats.PullRequest++
+			stats.PullRequest++
 			log.Printf(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
 			continue
 		}
 	
 		var commentTpl string
 		commentTplParams := []interface{}{i.GetUser().GetLogin()}
-		if !isStale(i) {
+		if !github.IsStale(i) {
 			log.Debugf(fmt.Sprintf("%s is active", i.GetHTMLURL()))
-			run.stats.Active++
+			stats.Active++
 			title := i.GetTitle()
 			if runID != "" {
 				title = fmt.Sprintf("[test][%s] %s", runID, i.GetTitle())
 			}
-			url, err := Discourse.PostTopic(title, i.GetBody(), discourseCategoryID)
+			url, err := discourse.PostTopic(title, i.GetBody())
 			if err != nil {
-				return err
+				return stats, err
 			}
 			commentTpl = activeTpl
 			commentTplParams = append(commentTplParams, url)
 		} else {
-			run.stats.Stale++
+			stats.Stale++
 			commentTpl = staleTpl
 		}
 	
 		if err := github.PostComment(i, fmt.Sprintf(commentTpl, commentTplParams...)); err != nil {
-			return err
+			return stats, err
 		}
 	
 		if err := github.Close(i); err != nil {
-			return err
+			return stats, err
 		}
 	
 		if err := github.Lock(i); err != nil {
-			return err
+			return stats, err
 		}
 	
-		run.stats.Processed++
+		stats.Processed++
 		time.Sleep(time.Millisecond + 1000)
 	}
-	return run.stats, nil
+	return stats, nil
 }

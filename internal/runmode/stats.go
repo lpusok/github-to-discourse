@@ -1,7 +1,7 @@
 package runmode
 
 
-type runStats struct {
+type Stats struct {
 	Processed   int
 	Stale       int
 	Active      int

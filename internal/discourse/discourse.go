@@ -36,11 +36,11 @@ func init() {
 	flag.IntVar(&discourseCategoryID, "discourse-category-id", staffCategory, "--discourse-category-id=<int> (discourse category to post topics to)")
 }
 
-func PostTopic(title string, content string, category int) (string, error) {
+func PostTopic(title string, content string) (string, error) {
 	message := make(map[string]interface{})
 
 	message["title"] = title
-	message["category"] = category
+	message["category"] = discourseCategoryID
 	message["raw"] = content
 
 	payload, err := json.Marshal(message)
