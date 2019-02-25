@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	stepmanModels "github.com/bitrise-io/stepman/models"
 	"github.com/bitrise-io/go-utils/log"
@@ -38,6 +39,8 @@ func LoadRepos(steplibURL string, fromOrgs []string) (repoURLs []string, err err
 	for _, stp := range data.Steps {
 		// filter to our repositories
 		for _, o := range fromOrgs {
+			substr := strings.SplitAfter(o, "github.com/")[1]
+			owner := strings.Split(substr, "/")[0]
 			if owner == o {
 				repoURLs = append(urls, stp.Versions[stp.LatestVersionNumber].Source.Git)
 				break
