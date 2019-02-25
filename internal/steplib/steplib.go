@@ -39,8 +39,12 @@ func LoadRepos(steplibURL string, fromOrgs []string) (repoURLs []string, err err
 	for _, stp := range data.Steps {
 		// filter to our repositories
 		for _, o := range fromOrgs {
-			substr := strings.SplitAfter(o, "github.com/")[1]
-			owner := strings.Split(substr, "/")[0]
+			parts := strings.SplitAfter(stp.Versions[stp.LatestVersionNumber].Source.Git, "github.com/")
+			if len(parts) == 1 {
+				continue
+			}
+			log.Printf("checking if ours")
+			owner := strings.Split(parts[1], "/")[0]
 			if owner == o {
 				repoURLs = append(repoURLs, stp.Versions[stp.LatestVersionNumber].Source.Git)
 				break
