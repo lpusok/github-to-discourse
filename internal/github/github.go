@@ -2,16 +2,18 @@ package github
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
 var (
