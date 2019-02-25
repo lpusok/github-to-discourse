@@ -6,15 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
-
-	"github.com/google/go-github/github"
-	"io/ioutil"
 	"strconv"
 	"strings"
-
+	"time"
 
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/google/go-github/github"
 )
 
 var (

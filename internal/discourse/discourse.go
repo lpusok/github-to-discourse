@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/google/go-github/github"
 )
 
 const (
