@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"flag"
 	"os"
 	"strings"
@@ -29,6 +30,25 @@ func init() {
 	flag.StringVar(&orgs, "orgs", defaultOrgs, "--orgs=bitrise-steplib,bitrise-io (filters step repos to those owned by given orgs)")
 }
 
+func getRepoURLs(repoSrc string, srcStr string) ([]string, error) {
+	var repoURLs []string
+	var err error
+	switch repoSrc {
+	case "steplib":
+		fromOrgs := strings.Split(orgs, ",")
+		repoURLs, err = steplib.LoadRepos(srcStr, fromOrgs)
+		if err != nil {
+			return nil, fmt.Errorf("load repos from steplib: %s")
+		}
+
+		return repoURLs, nil
+	case "cherry":
+		return strings.Split(srcStr, ","), nil
+	default:
+		return nil, fmt.Errorf("error: not recognized repo source %s", repoSrc)
+	}
+}
+
 func main() {
 
 	flag.Parse()
@@ -38,31 +58,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	var repoURLs []string
-	var err error
-	switch repoSrc {
-	case "steplib":
-		fromOrgs := strings.Split(orgs, ",")
-		steplibURL := flag.Args()[0]
-		
-		log.Printf("loading repos")
-		repoURLs, err = steplib.LoadRepos(steplibURL, fromOrgs)
-	case "cherry":
-		repoURLs = strings.Split(flag.Args()[0], ",")
-	default:
-		log.Errorf("error: not recognized repo source %s", repoSrc)
-		os.Exit(1)
-	}
+	log.Infof("get repos")
+	repoURLs, err := getRepoURLs(repoSrc, flag.Args()[0])
 
 	if err != nil {
 		log.Errorf("error: %s", mode)
 		os.Exit(1)
 	}
 	
-	log.Printf("get open issues for repos: %s", repoURLs)
+	log.Infof("get open issues for repos: %s", repoURLs)
 	issues := github.GetOpenIssues(repoURLs)
 
-	log.Printf("running in %s mode", mode)
+	log.Infof("process issues")
+	log.Printf("%s", issues)
 	var stats runmode.Stats
 	switch mode {
 	case "dry":
