@@ -43,7 +43,7 @@ func LoadRepos(steplibURL string, fromOrgs []string) (repoURLs []string, err err
 			if len(parts) == 1 {
 				continue
 			}
-			log.Printf("checking if ours")
+
 			owner := strings.Split(parts[1], "/")[0]
 			if owner == o {
 				repoURLs = append(repoURLs, stp.Versions[stp.LatestVersionNumber].Source.Git)

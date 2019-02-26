@@ -45,6 +45,7 @@ func main() {
 		fromOrgs := strings.Split(orgs, ",")
 		steplibURL := flag.Args()[0]
 		
+		log.Printf("loading repos")
 		repoURLs, err = steplib.LoadRepos(steplibURL, fromOrgs)
 	case "cherry":
 		repoURLs = strings.Split(flag.Args()[0], ",")
@@ -58,7 +59,10 @@ func main() {
 		os.Exit(1)
 	}
 	
+	log.Printf("get open issues for repos: %s", repoURLs)
 	issues := github.GetOpenIssues(repoURLs)
+
+	log.Printf("running in %s mode", mode)
 	var stats runmode.Stats
 	switch mode {
 	case "dry":

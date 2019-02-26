@@ -35,7 +35,7 @@ func init() {
 func DryRun(issues []*gh.Issue) (Stats, error) {
 	var stats Stats
 	for _, i := range issues {
-		log.Printf("processing issue %s", i.GetHTMLURL())
+		log.Printf("process issue %s", i.GetHTMLURL())
 		if i.IsPullRequest() {
 			stats.PullRequest++
 			fmt.Println(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
@@ -49,51 +49,56 @@ func DryRun(issues []*gh.Issue) (Stats, error) {
 			stats.Stale++
 			fmt.Println(fmt.Sprintf("%s is stale", i.GetHTMLURL()))
 		}
-		stats.Processed++
 		time.Sleep(time.Millisecond + 1000)
 	}
-
+	stats.Processed = len(issues)
 	return stats, nil
 }
 
 func LiveRun(issues []*gh.Issue) (Stats, error) {
 	var stats Stats
 	for _, i := range issues {
-		fmt.Println(fmt.Sprintf("processing issue %s", i.GetHTMLURL()))
+		log.Printf("process issue %s", i.GetHTMLURL())
 		if i.IsPullRequest() {
 			stats.PullRequest++
-			log.Printf(fmt.Sprintf("skip %s: is pull request", i.GetHTMLURL()))
+			log.Printf("skip %s: is pull request", i.GetHTMLURL())
 			continue
 		}
 	
 		var commentTpl string
 		commentTplParams := []interface{}{i.GetUser().GetLogin()}
 		if !github.IsStale(i) {
-			log.Debugf(fmt.Sprintf("%s is active", i.GetHTMLURL()))
 			stats.Active++
 			title := i.GetTitle()
 			if runID != "" {
 				title = fmt.Sprintf("[test][%s] %s", runID, i.GetTitle())
 			}
+			
+			log.Printf("post to discourse")
 			url, err := discourse.PostTopic(title, i.GetBody())
 			if err != nil {
 				return stats, err
 			}
+
 			commentTpl = activeTpl
 			commentTplParams = append(commentTplParams, url)
 		} else {
+			log.Printf("skip %s: is stale", i.GetHTMLURL())
 			stats.Stale++
 			commentTpl = staleTpl
 		}
 	
+		log.Printf("post comment")
 		if err := github.PostComment(i, fmt.Sprintf(commentTpl, commentTplParams...)); err != nil {
 			return stats, err
 		}
-	
+		
+		log.Printf("close issue")
 		if err := github.Close(i); err != nil {
 			return stats, err
 		}
-	
+		
+		log.Printf("lock issue")
 		if err := github.Lock(i); err != nil {
 			return stats, err
 		}

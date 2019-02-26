@@ -41,11 +41,17 @@ func GetOpenIssues(repoURLs []string) []*github.Issue {
 		owner := fragments[len(fragments)-2]
 		name := strings.TrimSuffix(fragments[len(fragments)-1], ".git")
 		
-		issues, _, err := client.Issues.ListByRepo(ctx, owner, name, &opts)
+		issues, resp, err := client.Issues.ListByRepo(ctx, owner, name, &opts)
 		if err != nil {
 			log.Warnf("fetch issues from %s: %s", url, err)
 			continue
 		}
+
+		if resp.Response.StatusCode != 200 {
+			log.Warnf("fetch issues from %s: %s", url, resp.Response.Status)
+			continue
+		}
+
 		all = append(all, issues...)
 
 	}
@@ -58,41 +64,36 @@ func IsStale(i *github.Issue) bool {
 }
 
 func PostComment(i *github.Issue, comment string) error {
-	// prepare payload
 	commentPayload := map[string]interface{}{
 		"body": comment,
 	}
 
-	commentBytes, err := json.Marshal(commentPayload)
+	data, err := json.Marshal(commentPayload)
 	if err != nil {
-		return fmt.Errorf("could not marshal commentPayload %s: %s", commentPayload, err)
+		return fmt.Errorf("marshal %s: %s", commentPayload, err)
 	}
 
-	// posting comment to GitHub
-	req, err := http.NewRequest("POST", i.GetCommentsURL(), bytes.NewBuffer(commentBytes))
+	req, err := http.NewRequest("POST", i.GetCommentsURL(), bytes.NewBuffer(data))
 	if err != nil {
-		return fmt.Errorf("could not create request: %s", err)
+		return fmt.Errorf("create POST %s request with payload %s: %s", i.GetCommentsURL(), string(data), err)
 	}
 
 	resp, err := tc.Do(req)
 	if err != nil {
-		return fmt.Errorf("could not send request: %s", err)
+		return fmt.Errorf("send POST %s request with payload %s: %s", i.GetCommentsURL(), string(data), err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("warning: could not close response body: %s", err)
+			fmt.Printf("warning: close response body: %s", err)
 		}
 	}()
 
-	if err != nil {
-		return fmt.Errorf("error posting payload %s: %s", commentPayload, err)
-	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("could not read response body: %s", err)
+		return fmt.Errorf("read response body: %s", err)
 	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("api error for payload %s: %s", commentPayload, body)
+	if resp.StatusCode != 201 {
+		return fmt.Errorf("api error: POST %s %s: %s %s", i.GetCommentsURL(), data, resp.Status, body)
 	}
 
 	return nil
@@ -103,12 +104,12 @@ func Close(i *github.Issue) error {
 		"state": "closed",
 	}
 
-	payloadBytes, err := json.Marshal(payload)
+	data, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("could not marshal %s: %s", payload, err)
 	}
 
-	request, err := http.NewRequest("PATCH", i.GetURL(), bytes.NewBuffer(payloadBytes))
+	request, err := http.NewRequest("PATCH", i.GetURL(), bytes.NewBuffer(data))
 	if err != nil {
 		return fmt.Errorf("could not create request: %s", err)
 	}
@@ -130,7 +131,7 @@ func Close(i *github.Issue) error {
 	if err != nil {
 		return fmt.Errorf("could not read response body: %s", err)
 	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+	if resp.StatusCode != 200 {
 		return fmt.Errorf("api error for payload %s: %s", payload, body)
 	}
 
@@ -163,7 +164,7 @@ func Lock(i *github.Issue) error {
 	if err != nil {
 		return fmt.Errorf("could not read response body: %s", err)
 	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+	if resp.StatusCode != 204 {
 		return fmt.Errorf("api error: %s", body)
 	}
 
