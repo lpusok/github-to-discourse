@@ -51,7 +51,7 @@ func DryRun(issues []*gh.Issue) (Stats, error) {
 func LiveRun(issues []*gh.Issue) (Stats, error) {
 	var stats Stats
 	for _, i := range issues {
-		log.Printf("process issue %s", i.GetHTMLURL())
+		log.Infof("process issue %s", i.GetHTMLURL())
 		if i.IsPullRequest() {
 			stats.PullRequest++
 			log.Printf("skip %s: is pull request", i.GetHTMLURL())
