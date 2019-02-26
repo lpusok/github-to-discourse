@@ -1,7 +1,6 @@
 package runmode
 
 import (
-	"flag"
 	"fmt"
 
 
@@ -25,12 +24,6 @@ const (
 	activeTpl = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). From now on, you can track this issue at: %s"
 	staleTpl  = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). Because this issue has been inactive for more than three months, we will be closing it. If you feel it is still relevant, please open a ticket on Discourse!"
 )
-
-var runID string
-
-func init() {
-	flag.StringVar(&runID, "run-id", "", "--run-id=<string> (created resources will have 'myrunid' baked into title for easier identification)")
-}
 
 func DryRun(issues []*gh.Issue) (Stats, error) {
 	var stats Stats
@@ -69,13 +62,9 @@ func LiveRun(issues []*gh.Issue) (Stats, error) {
 		commentTplParams := []interface{}{i.GetUser().GetLogin()}
 		if !github.IsStale(i) {
 			stats.Active++
-			title := i.GetTitle()
-			if runID != "" {
-				title = fmt.Sprintf("[test][%s] %s", runID, i.GetTitle())
-			}
 			
 			log.Printf("post to discourse")
-			url, err := discourse.PostTopic(title, i.GetBody())
+			url, err := discourse.PostTopic(i.GetTitle(), i.GetBody())
 			if err != nil {
 				return stats, err
 			}
