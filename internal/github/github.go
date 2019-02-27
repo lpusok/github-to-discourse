@@ -64,23 +64,23 @@ func IsStale(i *github.Issue) bool {
 }
 
 func PostComment(i *github.Issue, comment string) error {
-	commentPayload := map[string]interface{}{
+	payload := map[string]interface{}{
 		"body": comment,
 	}
 
-	data, err := json.Marshal(commentPayload)
+	data, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("marshal %s: %s", commentPayload, err)
+		return fmt.Errorf("marshal %s: %s", payload, err)
 	}
 
 	req, err := http.NewRequest("POST", i.GetCommentsURL(), bytes.NewBuffer(data))
 	if err != nil {
-		return fmt.Errorf("create POST %s request with payload %s: %s", i.GetCommentsURL(), string(data), err)
+		return fmt.Errorf("create POST %s request with request body %s: %s", i.GetCommentsURL(), string(data), err)
 	}
 
 	resp, err := tc.Do(req)
 	if err != nil {
-		return fmt.Errorf("send POST %s request with payload %s: %s", i.GetCommentsURL(), string(data), err)
+		return fmt.Errorf("send POST %s request with request body %s: %s", i.GetCommentsURL(), string(data), err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {

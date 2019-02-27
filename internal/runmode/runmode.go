@@ -79,17 +79,17 @@ func LiveRun(issues []*gh.Issue) (Stats, error) {
 	
 		log.Printf("post comment")
 		if err := github.PostComment(i, fmt.Sprintf(commentTpl, commentTplParams...)); err != nil {
-			return stats, err
+			return stats, fmt.Errorf("post comment to %s: %s",i.GetHTMLURL(), err)
 		}
 		
 		log.Printf("close issue")
 		if err := github.Close(i); err != nil {
-			return stats, err
+			return stats, fmt.Errorf("close %s: %s",i.GetHTMLURL(), err)
 		}
 		
 		log.Printf("lock issue")
 		if err := github.Lock(i); err != nil {
-			return stats, err
+			return stats, fmt.Errorf("lock %s: %s",i.GetHTMLURL(), err)
 		}
 	
 		stats.Processed++
