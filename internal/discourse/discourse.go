@@ -20,6 +20,9 @@ var (
 	discourseAPIKey     = os.Getenv("DISCOURSE_API_KEY")
 	discourseAPIUser    = os.Getenv("DISCOURSE_API_USER")
 	discourseCategoryID int
+	topicTpl = `Original GitHub post: %s
+	
+	%s`
 )
 
 func init() {
@@ -36,12 +39,12 @@ func init() {
 	flag.IntVar(&discourseCategoryID, "discourse-category-id", staffCategory, "--discourse-category-id=<int> (discourse category to post topics to)")
 }
 
-func PostTopic(title string, content string) (string, error) {
+func PostTopic(title string, originURL, content string) (string, error) {
 	message := make(map[string]interface{})
 
 	message["title"] = title
 	message["category"] = discourseCategoryID
-	message["raw"] = content
+	message["raw"] = fmt.Sprintf(topicTpl, originURL, content)
 
 	payload, err := json.Marshal(message)
 	if err != nil {

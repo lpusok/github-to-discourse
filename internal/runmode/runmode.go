@@ -21,8 +21,14 @@ const (
 )
 
 const (
-	activeTpl = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). From now on, you can track this issue at: %s"
-	staleTpl  = "Hi %s! We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues). Because this issue has been inactive for more than three months, we will be closing it. If you feel it is still relevant, please open a ticket on Discourse!"
+	activeTpl = `Hi %s!
+	We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues).
+	From now on, you can track this issue at: %s`
+	staleTpl  = `Hi %s!
+	We are migrating our GitHub issues to Discourse (https://discuss.bitrise.io/c/issues/build-issues).
+	Because this issue has been inactive for more than three months, we will be closing it.
+	
+	If you feel it is still relevant, please open a ticket on Discourse!`
 )
 
 func DryRun(issues []*gh.Issue) (Stats, error) {
@@ -64,7 +70,7 @@ func LiveRun(issues []*gh.Issue) (Stats, error) {
 			stats.Active++
 			
 			log.Printf("post to discourse")
-			url, err := discourse.PostTopic(i.GetTitle(), i.GetBody())
+			url, err := discourse.PostTopic(i.GetTitle(), i.GetHTMLURL(), i.GetBody())
 			if err != nil {
 				return stats, err
 			}
