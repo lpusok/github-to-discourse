@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	staffCategory  = 29
+	internalTestCategory  = 29
 	buildIssuesCat = 11
 )
 
@@ -36,7 +36,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	flag.IntVar(&discourseCategoryID, "discourse-category-id", staffCategory, "--discourse-category-id=<int> (discourse category to post topics to)")
+	flag.IntVar(&discourseCategoryID, "discourse-category-id", internalTestCategory, "--discourse-category-id=<int> (discourse category to post topics to)")
 }
 
 func PostTopic(title string, originURL, content string) (string, error) {
