@@ -60,17 +60,16 @@ func main() {
 
 	log.Infof("get repos")
 	repoURLs, err := getRepoURLs(repoSrc, flag.Args()[0])
-
 	if err != nil {
-		log.Errorf("error: %s", mode)
+		log.Errorf("error getting repos using mode %s and arg %s: %s", repoSrc, flag.Args()[0], err)
 		os.Exit(1)
 	}
+	log.Printf("loaded %d repos: %s", len(repoURLs), repoURLs)
 	
-	log.Infof("get open issues for repos: %s", repoURLs)
+	log.Infof("get open issues")
 	issues := github.GetOpenIssues(repoURLs)
+	log.Printf("found %d open issues: %s", len(issues), github.GetHTMLURLs(issues))
 
-	log.Infof("process issues")
-	log.Printf("%s", issues)
 	var stats runmode.Stats
 	switch mode {
 	case "dry":
@@ -83,11 +82,11 @@ func main() {
 	}
 	
 	if err != nil {
-		log.Errorf("error: %s", mode)
+		log.Errorf("error: %s", err)
 		os.Exit(1)
 	}
 
-	log.Successf("finished processing issues!")
+	log.Successf("success!")
 	log.Printf("run stats:")
 	log.Printf("open/pr/stale/migrated: %d/%d/%d/%d ", stats.Processed, stats.PullRequest, stats.Stale, stats.Active)
 }

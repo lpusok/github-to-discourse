@@ -48,7 +48,7 @@ func PostTopic(title string, originURL, content string) (string, error) {
 
 	payload, err := json.Marshal(message)
 	if err != nil {
-		return "", fmt.Errorf("could not marshal %s: %s", message, err)
+		return "", fmt.Errorf("could not marshal %s; reason: %s", message, err)
 	}
 
 	url := fmt.Sprintf("https://discuss.bitrise.io/posts.json?api_key=%s&api_username=%s", discourseAPIKey, discourseAPIUser)
@@ -67,7 +67,7 @@ func PostTopic(title string, originURL, content string) (string, error) {
 		return "", fmt.Errorf("could not read response body: %s", err)
 	}
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("api error for payload %s: %s", payload, body)
+		return "", fmt.Errorf("api error for payload %s; response body: %s", payload, body)
 	}
 
 	decoder := json.NewDecoder(strings.NewReader(string(body)))
@@ -75,12 +75,12 @@ func PostTopic(title string, originURL, content string) (string, error) {
 
 	var data map[string]interface{}
 	if err := decoder.Decode(&data); err != nil {
-		return "", fmt.Errorf("could not unmarshal response body %s: %s", body, err)
+		return "", fmt.Errorf("could not unmarshal response body %s; reason: %s", body, err)
 	}
 
 	topicID, err := data["topic_id"].(json.Number).Int64()
 	if err != nil {
-		return "", fmt.Errorf("could not unmarshal response body %s: %s", body, err)
+		return "", fmt.Errorf("could not unmarshal response body %s; reason: %s", body, err)
 	}
 	discourseURL := fmt.Sprintf("https://discuss.bitrise.io/t/%d", topicID)
 

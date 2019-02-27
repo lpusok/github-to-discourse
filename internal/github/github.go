@@ -31,6 +31,14 @@ func init() {
 	client = github.NewClient(tc)
 }
 
+func GetHTMLURLs(issues []*github.Issue) []string {
+	var urls []string
+	for _, iss := range issues {
+		urls = append(urls, iss.GetHTMLURL())
+	}
+	return urls
+}
+
 func GetOpenIssues(repoURLs []string) []*github.Issue {
 	var all []*github.Issue
 	opts := github.IssueListByRepoOptions{
