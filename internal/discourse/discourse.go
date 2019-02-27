@@ -63,7 +63,7 @@ func PostTopic(title string, content string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("could not read response body: %s", err)
 	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("api error for payload %s: %s", payload, body)
 	}
 
