@@ -92,7 +92,7 @@ func PostComment(i *github.Issue, comment string) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("warning: close response body: %s", err)
+			log.Warnf("warning: close response body: %s", err)
 		}
 	}()
 
@@ -128,7 +128,7 @@ func Close(i *github.Issue) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("warning: could not close response body: %s", err)
+			log.Warnf("warning: could not close response body: %s", err)
 		}
 	}()
 
@@ -161,7 +161,7 @@ func Lock(i *github.Issue) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("warning: could not close response body: %s", err)
+			log.Warnf("warning: could not close response body: %s", err)
 		}
 	}()
 

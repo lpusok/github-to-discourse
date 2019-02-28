@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/bitrise-io/go-utils/log"
 )
 
 const (
@@ -65,7 +67,7 @@ func PostTopic(title string, originURL, content string) (string, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("warning: could not close response body: %s", err)
+			log.Warnf("warning: could not close response body: %s", err)
 		}
 	}()
 	if err != nil {
