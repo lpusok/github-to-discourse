@@ -147,7 +147,6 @@ func Close(i *github.Issue) error {
 }
 
 func Lock(i *github.Issue) error {
-	// // lock
 	url := fmt.Sprintf("%s/lock", i.GetURL())
 	request, err := http.NewRequest("PUT", url, bytes.NewBuffer([]byte{}))
 	request.Header.Add("Content-Length", "0")
