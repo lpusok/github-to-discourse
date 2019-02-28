@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -51,7 +52,11 @@ func PostTopic(title string, originURL, content string) (string, error) {
 		return "", fmt.Errorf("could not marshal %s; reason: %s", message, err)
 	}
 
-	url := fmt.Sprintf("https://discuss.bitrise.io/posts.json?api_key=%s&api_username=%s", discourseAPIKey, discourseAPIUser)
+	queryStr := url.Values{
+		"api_key": []string{discourseAPIKey},
+		"api_username": []string{discourseAPIUser},
+	}.Encode()
+	url := fmt.Sprintf("https://discuss.bitrise.io/posts.json?%s", queryStr)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		return "", fmt.Errorf("error posting payload %s: %s", payload, err)
