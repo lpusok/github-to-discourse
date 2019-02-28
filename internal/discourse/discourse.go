@@ -40,11 +40,11 @@ func init() {
 }
 
 func PostTopic(title string, originURL, content string) (string, error) {
-	message := make(map[string]interface{})
-
-	message["title"] = title
-	message["category"] = discourseCategoryID
-	message["raw"] = fmt.Sprintf(topicTpl, originURL, content)
+	message := map[string]interface{}{
+		"title": title,
+		"category": discourseCategoryID,
+		"raw": fmt.Sprintf(topicTpl, originURL, content),
+	}
 
 	payload, err := json.Marshal(message)
 	if err != nil {
