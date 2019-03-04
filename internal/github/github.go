@@ -81,7 +81,7 @@ func PostComment(i *github.Issue, comment string) error {
 		return fmt.Errorf("marshal %s: %s", payload, err)
 	}
 
-	req, err := http.NewRequest("POST", i.GetCommentsURL(), bytes.NewBuffer(data))
+	req, err := http.NewRequest(http.MethodPost, i.GetCommentsURL(), bytes.NewBuffer(data))
 	if err != nil {
 		return fmt.Errorf("create POST %s request with request body %s: %s", i.GetCommentsURL(), string(data), err)
 	}
