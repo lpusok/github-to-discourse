@@ -1,0 +1,23 @@
+[[constraint]]
+  name = "github.com/google/go-github"
+  version = "19.1.0"
+
+[prune]
+  go-tests = true
+  unused-packages = true
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/oauth2"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "2.2.2"
+
+[[constraint]]
+  name = "github.com/bitrise-io/stepman"
+  branch = "master"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/bitrise-io/go-utils"
